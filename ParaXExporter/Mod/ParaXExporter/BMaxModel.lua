@@ -349,9 +349,10 @@ function BMaxModel:CreateDefaultAnimation()
 	anim.timeEnd = 4000;
 	anim.animID = 0;
 	anim.moveSpeed = 0.4;
-	self.m_bones[1]:AddIdleAnimation();
 	table.insert(self.m_animations, anim);
 
+	self.m_bones[1]:AddIdleAnimation();
+	self:AddRotationAnimation(0, 0, 4000, 0, 2 * 3.14);
 	--self:AddWalkAnimation(4, 4000, 5000, 0.4, true);
 end
 
@@ -359,6 +360,13 @@ function BMaxModel:CreateRootBone()
 	local bone = ModelBone:new();
 
 	table.insert(self.m_bones, bone);
+end
+
+function BMaxModel:AddRotationAnimation(nAnimID, nStartTime, nEndTime, nStartAngle, nEndAngle)
+	self.m_bones[1]:AddRotAnimationFrame(nStartTime, nStartAngle);
+	self.m_bones[1]:AddRotAnimationFrame((nStartTime + nEndTime) / 2, (nStartAngle + nEndAngle) / 2);
+	self.m_bones[1]:AddRotAnimationFrame(nEndTime, nEndAngle);
+	self.m_bones[1]:AddRotRange();
 end
 
 function BMaxModel:AddWalkAnimation(nAnimID, nStartTime, nEndTime, fMoveSpeed, bMoveForward)

@@ -328,7 +328,6 @@ function ParaXWriter:WriteXGeosets()
 		self.file:WriteInt(geoset.d5);
 		self.file:WriteInt(geoset.d6);
 
-		print("count geoset", geoset.vstart, geoset.icount);
 		
 		local v = {0, 0, 0};
 		self:Write3DVector(v, true);
@@ -499,7 +498,6 @@ function ParaXWriter:WriteRawData()
 		self.file:WriteFloat(pos[1]);
 		self.file:WriteFloat(pos[2]);
 		self.file:WriteFloat(pos[3]);
-		print("vertice pos", pos[1], pos[2], pos[3]);
 
 		self.file:WriteBytes(4, vertice.weights);
 		self.file:WriteBytes(4, vertice.bones);
