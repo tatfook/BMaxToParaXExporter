@@ -2,7 +2,7 @@ local AnimationBlock = commonlib.inherit(nil, commonlib.gettable("Mod.ParaXExpor
 
 function AnimationBlock:ctor()
 	self.type = 0;
-	self.seq = 0;
+	self.seq = -1;
 	self.nRanges = 0;
 	self.nTimes = 0;
 	self.nKeys = 0;

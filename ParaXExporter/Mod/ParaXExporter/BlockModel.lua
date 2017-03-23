@@ -17,6 +17,7 @@ local BlockModel = commonlib.inherit(nil,commonlib.gettable("Mod.ParaXExporter.B
 function BlockModel:ctor()
 	self.m_vertices = {};
 	self.m_nFaceCount = 0;
+	self.m_color = -1;
 end
 
 -- init the model as a cube
@@ -118,6 +119,12 @@ function BlockModel:AddFace(from_block, nFaceIndex)
 	for v = 0,3 do
 		local i = nFirstVertex + v;
 		self:AddVertex(from_block, i);
+	end
+end
+
+function BlockModel:SetColor(color)
+	if (color) then
+		self.m_color = color;
 	end
 end
 

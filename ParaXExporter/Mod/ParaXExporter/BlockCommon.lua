@@ -92,4 +92,3 @@ BlockCommon.RBP_SixNeighbors = {
 	[4] = BlockCommon.rbp_pX,
 	[5] = BlockCommon.rbp_pZ,
 };
-
