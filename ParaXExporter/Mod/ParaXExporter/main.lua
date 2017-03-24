@@ -9,16 +9,31 @@ NPL.load("(gl)Mod/ParaXExporter/main.lua");
 local ParaXExporter = commonlib.gettable("Mod.ParaXExporter");
 ------------------------------------------------------------
 ]]
+
+-- test method 
+
+--[[
+	local parser = BMaxParser:new();
+	local writer = ParaXWriter:new();
+	 parser:Load(input_file); input_file is full path
+	 writer:LoadModel(parser.actor_model);
+	 writer:SaveAsBinary(output_file);  output_file is full path
+
+	 or run a command as "paraxexporter/[inputfile name]",
+	 inputfile name is the bmax movie block file save in the world dDirectory 
+--]]
+
 NPL.load("(gl)Mod/ParaXExporter/Common.lua");
 NPL.load("(gl)Mod/ParaXExporter/BMaxParser.lua");
 NPL.load("(gl)Mod/ParaXExporter/BMaxModel.lua");
-NPL.load("(gl)Mod/ParaXExporter/ParaXModel.lua");
-
+NPL.load("(gl)Mod/ParaXExporter/ParaXWriter.lua");
+		
+		
+local ParaXWriter = commonlib.gettable("Mod.ParaXExporter.ParaXWriter");
 local CmdParser = commonlib.gettable("MyCompany.Aries.Game.CmdParser");	
 local Common = commonlib.gettable("Mod.ParaXExporter.Common")
 local BMaxParser = commonlib.gettable("Mod.ParaXExporter.BMaxParser");	
 local BMaxModel = commonlib.gettable("Mod.ParaXExporter.BMaxModel");	
-local ParaXModel = commonlib.gettable("Mod.ParaXExporter.ParaXModel");	
 local ParaXExporter = commonlib.inherit(commonlib.gettable("Mod.ModBase"),commonlib.gettable("Mod.ParaXExporter"));
 
 function ParaXExporter:ctor()
@@ -39,14 +54,8 @@ end
 
 function ParaXExporter:init()
 	LOG.std(nil, "info", "ParaXExporter", "plugin initialized");
-	self:RegisterExporter();
+	--self:RegisterExporter();
 	self:RegisterCommand();
-	self:Export("4.bmax", "4.x");
-
-	--local model = ParaXModel:new();
-	--model:Load("worlds/DesignHouse/world/blocktemplates/1.bmax");
-	--Common:PrintTable(model.m_blockModels[1]);
-	--common = Common:new();
 end
 
 function ParaXExporter:OnLogin()
@@ -96,18 +105,16 @@ function ParaXExporter:RegisterCommand()
 	local Commands = commonlib.gettable("MyCompany.Aries.Game.Commands");
 	Commands["paraxexporter"] = {
 		name="paraxexporter", 
-		quick_ref="/paraxexporter [-native|cpp] [filename]", 
+		quick_ref="/paraxexporter [filename]", 
 		desc=[[export a bmax file or current selection to paraX file
 @param -native: use C++ exporter, instead of NPL.
 /paraxexporter test.x			export current selection to test.stl file
 /paraxexporter -b test.bmax		convert test.bmax file to test.stl file
 ]], 
 		handler = function(cmd_name, cmd_text, cmd_params, fromEntity)
-			local file_name, options;
-			options, cmd_text = CmdParser.ParseOptions(cmd_text);
+			local file_name;
 			file_name,cmd_text = CmdParser.ParseString(cmd_text);
-			local use_cpp_native = options.native~=nil or options.cpp~=nil;
-			self:Export(file_name, nil, use_cpp_native);
+			self:Export(file_name, "output.x");
 		end,
 	};
 end
@@ -116,8 +123,8 @@ end
 -- if it is not, we will convert current selection to *.x files. 
 -- @param output_file_name: this should be nil, unless you explicitly specify an output name.
 -- @param -native: use C++ exporter, instead of NPL.
-function ParaXExporter:Export(input_file_name,output_file_name,binary,native)
-	input_file_name = input_file_name or "default.x";
+function ParaXExporter:Export(input_file_name, output_file_name)
+	--[[input_file_name = input_file_name or "default.x";
 
 	local name, extension = string.match(input_file_name,"(.+)%.(%w+)$");
 
@@ -133,13 +140,7 @@ function ParaXExporter:Export(input_file_name,output_file_name,binary,native)
 	LOG.std(nil, "info", "ParaxExporter", "exporting from %s to %s", input_file_name, output_file_name);
 	
 	local res;
-	--if(native and ParaScene.BmaxExportToSTL)then
-		-- use the C++ ParaEngine, functions may be limited. 
-		-- res = ParaScene.BmaxExportToParaX(input_file_name,output_file_name, binary);
-		-- print (res);
-	--else
-		NPL.load("(gl)Mod/ParaXExporter/ParaXWriter.lua");
-		local ParaXWriter = commonlib.gettable("Mod.ParaXExporter.ParaXWriter");
+		
 		--NPL.load("(gl)Mod/ParaXExporter/BMaxModel.lua");
 		--local BMaxModel = commonlib.gettable("Mod.ParaXExporter.BMaxModel");
 
@@ -150,8 +151,18 @@ function ParaXExporter:Export(input_file_name,output_file_name,binary,native)
 				model:LoadFromBlocks(blocks);
 			end]]
 		--local blocks = Game.SelectionManager:GetSelectedBlocks();
+
+		local parser = BMaxParser:new();
 		local writer = ParaXWriter:new();
-		writer:LoadModelFromBMaxFile("worlds/DesignHouse/world/blocktemplates/2.bmax");
-		writer:SaveAsBinary(output_file_name);
+
+		local input_file = GameLogic.GetWorldDirectory()..input_file_name;
+		local output_file = GameLogic.GetWorldDirectory()..output_file_name;
+		parser:Load(input_file);
+
+		local actor_model = parser.actor_model;
+		if actor_model then 
+			writer:LoadModel(parser.actor_model);
+			writer:SaveAsBinary(output_file);
+		end
 end
 

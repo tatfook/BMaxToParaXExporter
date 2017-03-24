@@ -3,7 +3,6 @@ NPL.load("(gl)script/ide/math/ShapeAABB.lua");
 NPL.load("(gl)Mod/ParaXExporter/Common.lua");
 NPL.load("(gl)Mod/ParaXExporter/Model/AnimationBlock.lua");
 
-local ParaXModel = commonlib.gettable("Mod.ParaXExporter.ParaXModel");
 local ShapeAABB = commonlib.gettable("mathlib.ShapeAABB");
 local Common = commonlib.gettable("Mod.ParaXExporter.Common");
 local AnimationBlock = commonlib.gettable("Mod.ParaXExporter.Model.AnimationBlock");
@@ -13,27 +12,9 @@ local ParaXWriter = commonlib.inherit(nil,commonlib.gettable("Mod.ParaXExporter.
 function ParaXWriter:ctor()
 	self.file = nil;
 
-	self.paraXModel = ParaXModel:new();
-	self.actor_model = nil;
 	self.offset = 0;
 	self.data_length = 0;
-end
-
-function ParaXWriter:LoadModelFromBMaxFile(filename)
-	self.paraXModel:Load(filename);
-	--self:LoadModel(model);
-
-	self.actor_model = self.paraXModel.actor_model;
-end
-
-function ParaXWriter:LoadModel(paraXModel)
-	self.paraXModel = paraXModel;
-end
-
-function ParaXWriter:IsValid()
-	if(self.paraXModel ~= nil) then
-		return true;
-	end
+	self.model = nil;
 end
 
 function ParaXWriter:SaveAsBinary(output_file_name)
@@ -56,22 +37,25 @@ function ParaXWriter:SaveAsBinary(output_file_name)
 	self.file:close();
 end
 
+function ParaXWriter:LoadModel(bmaxModel)
+	self.model = bmaxModel;
+end
+
+function ParaXWriter:IsValid()
+	if(self.model) then
+		return true;
+	end
+end
+
 
 function ParaXWriter:WriteTemplate()
-	local file_name = "worlds/DesignHouse/world/blocktemplates/template.txt";
+	local file_name = "Mod/ParaXExporter/blocktemplates/template.txt";
 	local template_file = ParaIO.open(file_name, "r");
 
 	local file_size = ParaIO.GetFileSize(file_name);
 	local template_data = template_file:ReadString(file_size);
+	template_file:close();
 
-	--[[local str = template_file:readline();
-	print(str);
-	while(str ~= nil) do
-		print(str);
-		self.file:WriteString(str);
-		str = template_file:readline();
-	end--]]
-	--self.file:WriteBytes(fileSize, template_data);
 	self.file:write(template_data, #template_data);
 end
 
@@ -79,8 +63,7 @@ function ParaXWriter:WriteHeader()
 
 	--local actor = self.model.m_movie_blocks[1].m_actors[3];
 
-	local header = self.paraXModel.m_header;
-	self:WriteName(header.name);
+	self:WriteName("ParaXHeader");
 
 	self:WriteToken("{");
 
@@ -90,14 +73,13 @@ function ParaXWriter:WriteHeader()
 	-- 4 para + 4 version + 1 type + 1 animate = 10
 	self.file:WriteInt(10);
 
-	self:WriteCharArr(header.head_id);
+	self:WriteCharArr("para");
 
 	-- version
-	local version = header.version;
-	self.file:WriteInt(version[1]);
-	self.file:WriteInt(version[2]);
-	self.file:WriteInt(version[3]);
-	self.file:WriteInt(version[4]);
+	self.file:WriteInt(1);
+	self.file:WriteInt(0);
+	self.file:WriteInt(0);
+	self.file:WriteInt(0);
 
 	-- type 0: PARAX_MODEL_ANIMATED
 	self.file:WriteInt(0);
@@ -109,8 +91,8 @@ function ParaXWriter:WriteHeader()
 	self:WriteToken("<flt_list>");
 	self.file:WriteInt(6);
 
-	local min_extent = self.actor_model:GetMinExtent();
-	local max_extent = self.actor_model:GetMaxExtent();
+	local min_extent = self.model:GetMinExtent();
+	local max_extent = self.model:GetMaxExtent();
 	--local blockMinX,  blockMinY, blockMinZ = bmax_model.m_blockAABB:GetMinValues();
 	--local blockMaxX,  blockMaxY, blockMaxZ = bmax_model.m_blockAABB:GetMaxValues();
 
@@ -121,9 +103,6 @@ function ParaXWriter:WriteHeader()
 	self.file:WriteFloat(max_extent[1]);
 	self.file:WriteFloat(max_extent[2]);
 	self.file:WriteFloat(max_extent[3]);
-
-	print("min_extent", min_extent[1], min_extent[2], min_extent[3]);
-	print("max_extent", max_extent[1], max_extent[2], max_extent[3]);
 
 	-- int list 
 	self:WriteToken("<int_list>");
@@ -164,6 +143,13 @@ function ParaXWriter:WriteXViews()
 	-- XViews
 	-- no need to do anything, since there is only one view. all view 0 information are duplicated in other nodes.
 	-- count 0 
+	--[[self.file:WriteInt(12);
+	self.file:WriteInt(1);
+	for i = 1, 11 do
+		self.file:WriteInt(0);
+	end--]]
+
+	self.file:WriteInt(1);
 	self.file:WriteInt(0);
 	self:WriteToken("}");
 end
@@ -244,7 +230,7 @@ function ParaXWriter:WriteXAttachments()
 end
 
 function ParaXWriter:WriteXVertices()
-	local vertices = self.actor_model.m_vertices;
+	local vertices = self.model.m_vertices;
 	
 	self:WriteName("XVertices");
 	self:WriteToken("{");
@@ -272,7 +258,7 @@ function ParaXWriter:WriteXVertices()
 end
 
 function ParaXWriter:WriteXIndices0()
-	local indices = self.actor_model.m_indices;
+	local indices = self.model.m_indices;
 	self:WriteName("XIndices0");
 	self:WriteToken("{");
 
@@ -286,7 +272,6 @@ function ParaXWriter:WriteXIndices0()
 
 	-- nIndices 0
 	self.file:WriteInt(#indices);
-	print("count indices", #indices);
 
 	-- ofsIndices 0
 	self.file:WriteInt(self.offset);
@@ -302,7 +287,7 @@ function ParaXWriter:WriteXGeosets()
 	self:WriteName("XGeosets");
 	self:WriteToken("{");
 
-	local geosets = self.actor_model.m_geosets;
+	local geosets = self.model.m_geosets;
 	-- int list 
 	self:WriteToken("<int_list>");
 	-- XIndices0
@@ -328,7 +313,6 @@ function ParaXWriter:WriteXGeosets()
 		self.file:WriteInt(geoset.d5);
 		self.file:WriteInt(geoset.d6);
 
-		print("count geoset", geoset.vstart, geoset.icount);
 		
 		local v = {0, 0, 0};
 		self:Write3DVector(v, true);
@@ -341,7 +325,7 @@ function ParaXWriter:WriteXRenderPass()
 	self:WriteName("XRenderPass");
 	self:WriteToken("{");
 
-	local render_passes = self.actor_model.m_renderPasses;
+	local render_passes = self.model.m_renderPasses;
 	local render_passes_count = #render_passes;
 	-- int list 
 	self:WriteToken("<int_list>");
@@ -354,7 +338,6 @@ function ParaXWriter:WriteXRenderPass()
 
 
 	for i, pass in ipairs(render_passes) do 
-		print("indexCount", pass.indexCount);
 		self.file:WriteInt(pass.indexStart);
 		self.file:WriteInt(pass.indexCount);
 		self.file:WriteInt(pass.vertexStart);
@@ -388,7 +371,7 @@ function ParaXWriter:WriteXRenderPass()
 end
 
 function ParaXWriter:WriteXBones()
-	local bones = self.actor_model.m_bones;
+	local bones = self.model.m_bones;
 	local nbones = #bones
 	
 	self:WriteName("XBones");
@@ -401,29 +384,32 @@ function ParaXWriter:WriteXBones()
 	self.file:WriteInt(29);
 	self.file:WriteInt(nbones);
 
-	for i, bone in ipairs(bones) do
+	for i, frameNode in ipairs(bones) do
 
-		self.file:WriteInt(bone.animid);
-		self.file:WriteInt(bone.flags);
-		self.file:WriteInt(bone.parent);
-		self.file:WriteInt(bone.boneid);
+		local bone = frameNode.bone;
+		if bone then 
+			self.file:WriteInt(bone.animid);
+			self.file:WriteInt(bone.flags);
+			self.file:WriteInt(bone.parent);
+			self.file:WriteInt(bone.boneid);
 		
-		self:WriteAnimationBlock(bone.translation, 12);
-		self:WriteAnimationBlock(bone.rotation, 16);
-		self:WriteAnimationBlock(bone.scaling, 12);
-		self:Write3DVector(bone.pivot, true);
-		if i < nbones then
-			self:WriteToken("<int_list>");
-			self.file:WriteInt(28);
+			self:WriteAnimationBlock(bone.translation, 12);
+			self:WriteAnimationBlock(bone.rotation, 16);
+			self:WriteAnimationBlock(bone.scaling, 12);
+			self:Write3DVector(bone.pivot, true);
+			if i < nbones then
+				self:WriteToken("<int_list>");
+				self.file:WriteInt(28);
+			end
 		end
-
 	end
+	
 	
 	self:WriteToken("}");
 end
 
 function ParaXWriter:WriteXAnimations()
-	local animations = self.actor_model.m_animations;
+	local animations = self.model.m_animations;
 	local animation_count = #animations;
 
 	self:WriteName("XAnimations");
@@ -436,11 +422,10 @@ function ParaXWriter:WriteXAnimations()
 	self.file:WriteInt(animation_count);
 
 	for i, anim in ipairs(animations) do 
-		
 		self.file:WriteInt(anim.animID);
 		self.file:WriteInt(anim.timeStart);
 		self.file:WriteInt(anim.timeEnd);
-		print(123);
+		
 		-- int list 
 		self:WriteToken("<flt_list>");
 		self.file:WriteInt(1);
@@ -474,11 +459,13 @@ function ParaXWriter:WriteXAnimations()
 
 		self.file:WriteInt(anim.s[1]);
 		self.file:WriteInt(anim.s[2]);
+		
 	end
 	self:WriteToken("}");
 end
 
 function ParaXWriter:WriteXDWordArray()
+	
 	self:WriteName("XDWORDArray");
 	self:WriteRawData();
 end
@@ -489,17 +476,16 @@ function ParaXWriter:WriteRawData()
 
 	self:WriteToken("<int_list>");
 
-	self.file:WriteInt(self.data_length + 1);
-	self.file:WriteInt(self.data_length);
-	print("data_length", self.data_length);
+	local count = self.data_length / 4;
+	self.file:WriteInt(count + 1);
+	self.file:WriteInt(count);
 
-	local vertices = self.actor_model.m_vertices;
+	local vertices = self.model.m_vertices;
 	for _, vertice in ipairs(vertices) do
 		local pos = vertice.pos;
 		self.file:WriteFloat(pos[1]);
 		self.file:WriteFloat(pos[2]);
 		self.file:WriteFloat(pos[3]);
-		print("vertice pos", pos[1], pos[2], pos[3]);
 
 		self.file:WriteBytes(4, vertice.weights);
 		self.file:WriteBytes(4, vertice.bones);
@@ -517,15 +503,16 @@ function ParaXWriter:WriteRawData()
 		self.file:WriteInt(vertice.color1);
 	end
 
-	local indices = self.actor_model.m_indices;
+	local indices = self.model.m_indices;
 
 	for _, indice in ipairs(indices) do
 		self.file:WriteShort(indice);
 	end 
 
-	local bones = self.actor_model.m_bones;
+	local bones = self.model.m_bones;
 
-	for _, bone in ipairs(bones) do
+	for _, frameNode in ipairs(bones) do
+		local bone = frameNode.bone;
 		self:WriteAnimationBlockRawData(bone.translation);
 		self:WriteAnimationBlockRawData(bone.rotation);
 		self:WriteAnimationBlockRawData(bone.scaling);
@@ -540,7 +527,6 @@ function ParaXWriter:WriteAnimationBlockRawData(animation_block)
 		self.file:WriteInt(range[1]);
 		self.file:WriteInt(range[2]);
 	end
-
 	for _, time in ipairs(animation_block.times) do 
 		self.file:WriteInt(time);
 	end
@@ -604,7 +590,7 @@ function ParaXWriter:WriteAnimationBlock(animation_block, key_size)
 	else 
 		self.file:WriteInt(0);
 	end
-
+	
 	self.file:WriteInt(animation_block.nKeys);
 	if(animation_block.nKeys > 0) then
 		self.file:WriteInt(self.offset);
