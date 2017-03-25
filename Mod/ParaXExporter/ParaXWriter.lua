@@ -1,3 +1,14 @@
+--[[
+Title: 
+Author(s):  
+Date: 
+Desc: 
+use the lib:
+------------------------------------------------------------
+NPL.load("(gl)Mod/ParaXExporter/ParaXWriter.lua");
+local ParaXWriter = commonlib.gettable("Mod.ParaXExporter.ParaXWriter");
+------------------------------------------------------------
+]]
 NPL.load("(gl)Mod/ParaXExporter/ParaXModel.lua");
 NPL.load("(gl)script/ide/math/ShapeAABB.lua");
 NPL.load("(gl)Mod/ParaXExporter/Common.lua");
@@ -32,8 +43,8 @@ function ParaXWriter:SaveAsBinary(output_file_name)
 		self:WriteHeader();
 		self:WriteBody();
 		self:WriteXDWordArray();
+		LOG.std(nil, "info", "ParaXWriter", "file written to %s with %d bytes", output_file_name, self.data_length);
 	end
-
 	self.file:close();
 end
 

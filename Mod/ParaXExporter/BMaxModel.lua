@@ -1,4 +1,3 @@
-
 --[[
 Title: bmax model
 Author(s): leio, refactored LiXizhi

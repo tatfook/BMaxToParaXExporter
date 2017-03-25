@@ -7,23 +7,9 @@ use the lib:
 ------------------------------------------------------------
 NPL.load("(gl)Mod/ParaXExporter/main.lua");
 local ParaXExporter = commonlib.gettable("Mod.ParaXExporter");
+ParaXExporter:ConvertFromBMaxToParaX("Mod/ParaXExporter/test/input.bmax", "temp/output.x");
 ------------------------------------------------------------
 ]]
-
--- test method 
-
---[[
-	local parser = BMaxParser:new();
-	local writer = ParaXWriter:new();
-	 parser:Load(input_file); input_file is full path
-	 writer:LoadModel(parser.actor_model);
-	 writer:SaveAsBinary(output_file);  output_file is full path
-
-	 or run a command as "paraxexporter/[inputfile name]",
-	 inputfile name is the bmax movie block file save in the world dDirectory 
---]]
-
-NPL.load("(gl)Mod/ParaXExporter/Common.lua");
 NPL.load("(gl)Mod/ParaXExporter/BMaxParser.lua");
 NPL.load("(gl)Mod/ParaXExporter/BMaxModel.lua");
 NPL.load("(gl)Mod/ParaXExporter/ParaXWriter.lua");
@@ -119,6 +105,20 @@ function ParaXExporter:RegisterCommand()
 	};
 end
 
+-- @param input_file: *.bmax file name
+-- @param output_file: *.x fileame
+function ParaXExporter:ConvertFromBMaxToParaX(input_file, output_file)
+	local parser = BMaxParser:new();
+	local writer = ParaXWriter:new();
+
+	parser:Load(input_file);
+	local actor_model = parser.actor_model;
+	if actor_model then 
+		writer:LoadModel(parser.actor_model);
+		writer:SaveAsBinary(output_file);
+	end
+end
+
 -- @param input_file_name: file name. if it is *.bmax, we will convert this file and save output to *.x file.
 -- if it is not, we will convert current selection to *.x files. 
 -- @param output_file_name: this should be nil, unless you explicitly specify an output name.
@@ -151,18 +151,9 @@ function ParaXExporter:Export(input_file_name, output_file_name)
 				model:LoadFromBlocks(blocks);
 			end]]
 		--local blocks = Game.SelectionManager:GetSelectedBlocks();
-
-		local parser = BMaxParser:new();
-		local writer = ParaXWriter:new();
-
-		local input_file = GameLogic.GetWorldDirectory()..input_file_name;
-		local output_file = GameLogic.GetWorldDirectory()..output_file_name;
-		parser:Load(input_file);
-
-		local actor_model = parser.actor_model;
-		if actor_model then 
-			writer:LoadModel(parser.actor_model);
-			writer:SaveAsBinary(output_file);
-		end
+		
+	local input_file = GameLogic.GetWorldDirectory()..input_file_name;
+	local output_file = GameLogic.GetWorldDirectory()..output_file_name;
+	self:ConvertFromBMaxToParaX(input_file, output_file)
 end
 

@@ -47,6 +47,7 @@
   <ItemGroup>
     <None Include="InstallPackages.bat" />
     <None Include="Mod\ParaXExporter\BlockCommon.lua" />
+    <None Include="Mod\ParaXExporter\BlockDirection.lua" />
     <None Include="Mod\ParaXExporter\BlockModel.lua" />
     <None Include="Mod\ParaXExporter\BMaxParser.lua" />
     <None Include="Mod\ParaXExporter\BMaxNode.lua" />
@@ -66,7 +67,9 @@
     <None Include="Mod\ParaXExporter\ParaXMovieBlock.lua" />
     <None Include="Mod\ParaXExporter\ParaXActor.lua" />
     <None Include="Mod\ParaXExporter\ParaXModel.lua" />
-    <None Include="Mod\ParaXExporter\empty.lua" />
+    <None Include="Mod\ParaXExporter\test\input.bmax" />
+    <None Include="Mod\ParaXExporter\test\kite.bmax" />
+    <None Include="Mod\ParaXExporter\test\testParaXExporter.lua" />
     <None Include="README.md" />
     <None Include="Run.bat" />
   </ItemGroup>

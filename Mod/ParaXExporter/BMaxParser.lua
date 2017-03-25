@@ -17,13 +17,24 @@ end
 -- @param bmax_filename: load from *.bmax file
 function BMaxParser:Load(bmax_filename)
 	if(not bmax_filename)then return end
-	local xmlRoot = ParaXML.LuaXML_ParseFile(bmax_filename);
+	self:SetFileName(bmax_filename);
+
+	local xmlRoot = ParaXML.LuaXML_ParseFile(self:GetFileName());
 	self:ParseHeader(xmlRoot);
 	local blocks = self:ParseBlocks(xmlRoot);
 	if(blocks) then
 		 self:LoadFromBlocks(blocks);
 	end
 end
+
+function BMaxParser:GetFileName()
+	return self.filename or "";
+end
+
+function BMaxParser:SetFileName(filename)
+	self.filename = filename;
+end
+
 
 function BMaxParser:ParseHeader(xmlRoot)
 	if(not xmlRoot)then return end
@@ -75,9 +86,22 @@ function BMaxParser:LoadActor(actors)
 	return commonlib.LoadTableFromString(result[1]);
 end
 
+-- find in world directory, and then find in the current bmax file directory. 
+-- return full path
+function BMaxParser:FindFile(filename)
+	local filename_ = GameLogic.GetWorldDirectory()..filename;
+	if(not ParaIO.DoesFileExist(filename_)) then
+		filename_ = self:GetFileName():gsub("[^/]+$", "") .. filename:match("([^/]+)$");
+		if(not ParaIO.DoesFileExist(filename_)) then
+			filename_ = filename;
+		end
+	end
+	return filename_;
+end
+
 function BMaxParser:ParseActor(actor)
 	self.actor_model = BMaxModel:new();
-	self.actor_model:Load(bmax_filename);
+	self.actor_model:Load();
 
 	local timeseries = actor.timeseries;
 
@@ -85,10 +109,14 @@ function BMaxParser:ParseActor(actor)
 	local file_name = asset_file.data[1];
 	local name, extension = string.match(file_name, "(.+)%.(%w+)$");
 
-	print("extension", extension);
 	if (extension == "bmax") then
-		self.actor_model:Load(GameLogic.GetWorldDirectory().. file_name);
-		self.actor_model:AddBoneAnimData(timeseries.bones) ;
+		local filename = self:FindFile(file_name);
+		if(filename) then
+			self.actor_model:Load(filename);
+			self.actor_model:AddBoneAnimData(timeseries.bones) ;
+		else
+			LOG.std(nil, "warn", "BMaxParser", "actor file %s not found in %s", filename, self:GetFileName());
+		end
 	end
 end
 
