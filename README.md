@@ -1,6 +1,8 @@
-# BMaxToParaXExporter
-Paracraft mod
+# This is a paracraft plugin (Mod)
 
-Please see the public wiki for details： 
+Reference:
+- [How To Create Paracraft Mod](https://github.com/LiXizhi/NPLRuntime/wiki/TutorialParacraftMod)
+- [Download paracraft](http://www.paracraft.cn)
 
-https://github.com/tatfook/BMaxToParaXExporter/wiki
+
+
