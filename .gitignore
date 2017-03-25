@@ -8,3 +8,5 @@ npl_packages
 *.log
 *.txt
 Debug
+bin
+obj
