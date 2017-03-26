@@ -23,7 +23,6 @@ local BMaxModel = commonlib.gettable("Mod.ParaXExporter.BMaxModel");
 local ParaXExporter = commonlib.inherit(commonlib.gettable("Mod.ModBase"),commonlib.gettable("Mod.ParaXExporter"));
 
 function ParaXExporter:ctor()
-
 end
 
 -- virtual function get mod name
@@ -49,6 +48,9 @@ end
 -- called when a new world is loaded. 
 
 function ParaXExporter:OnWorldLoad()
+	NPL.load("(gl)Mod/ParaXExporter/test/testParaXExporter.lua");
+	local testParaXExporter = commonlib.gettable("tests.testParaXExporter");
+	testParaXExporter:testStatic()
 end
 -- called when a world is unloaded. 
 
@@ -111,6 +113,7 @@ function ParaXExporter:ConvertFromBMaxToParaX(input_file, output_file)
 	local parser = BMaxParser:new();
 	local writer = ParaXWriter:new();
 
+	print("input", input_file, output_file);
 	parser:Load(input_file);
 	local actor_model = parser.actor_model;
 	if actor_model then 
@@ -125,7 +128,7 @@ end
 -- @param -native: use C++ exporter, instead of NPL.
 function ParaXExporter:Export(input_file_name, output_file_name)
 	--[[input_file_name = input_file_name or "default.x";
-
+	pri
 	local name, extension = string.match(input_file_name,"(.+)%.(%w+)$");
 
 	if(not output_file_name)then
@@ -151,9 +154,12 @@ function ParaXExporter:Export(input_file_name, output_file_name)
 				model:LoadFromBlocks(blocks);
 			end]]
 		--local blocks = Game.SelectionManager:GetSelectedBlocks();
-		
+	--[[print("123123");
 	local input_file = GameLogic.GetWorldDirectory()..input_file_name;
 	local output_file = GameLogic.GetWorldDirectory()..output_file_name;
-	self:ConvertFromBMaxToParaX(input_file, output_file)
+	self:ConvertFromBMaxToParaX(input_file, output_file)--]]
+
+	
+
 end
 

@@ -60,14 +60,14 @@ end
 
 
 function ParaXWriter:WriteTemplate()
-	local file_name = "Mod/ParaXExporter/blocktemplates/template.txt";
-	local template_file = ParaIO.open(file_name, "r");
+	local file_name = "Mod/ParaXExporter/template.txt";
+	if(ParaIO.DoesFileExist(file_name)) then
+		local template_file = ParaIO.open(file_name, "r");
+		local template_data = template_file:GetText(0, -1);
+		template_file:close();
+		self.file:write(template_data, #template_data);
+	end
 
-	local file_size = ParaIO.GetFileSize(file_name);
-	local template_data = template_file:ReadString(file_size);
-	template_file:close();
-
-	self.file:write(template_data, #template_data);
 end
 
 function ParaXWriter:WriteHeader()

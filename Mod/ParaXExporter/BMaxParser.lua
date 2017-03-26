@@ -112,6 +112,7 @@ function BMaxParser:ParseActor(actor)
 	if (extension == "bmax") then
 		local filename = self:FindFile(file_name);
 		if(filename) then
+			
 			self.actor_model:Load(filename);
 			self.actor_model:AddBoneAnimData(timeseries.bones) ;
 		else

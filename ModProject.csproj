@@ -40,6 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Mod\ParaXExporter\test\template.txt" />
     <Content Include="script/**" />
     <Content Include="Mod/ParaXExporter\main.lua" />
     <Content Include="Mod/ParaXExporter\ParaXWriter.lua" />
@@ -67,7 +68,9 @@
     <None Include="Mod\ParaXExporter\ParaXMovieBlock.lua" />
     <None Include="Mod\ParaXExporter\ParaXActor.lua" />
     <None Include="Mod\ParaXExporter\ParaXModel.lua" />
-    <None Include="Mod\ParaXExporter\test\input.bmax" />
+    <None Include="Mod\ParaXExporter\test\input.bmax">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Mod\ParaXExporter\test\kite.bmax" />
     <None Include="Mod\ParaXExporter\test\testParaXExporter.lua" />
     <None Include="README.md" />
