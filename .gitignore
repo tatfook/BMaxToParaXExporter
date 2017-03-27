@@ -10,3 +10,4 @@ npl_packages
 Debug
 bin
 obj
+!/Mod/ParaXExporter/template.txt
