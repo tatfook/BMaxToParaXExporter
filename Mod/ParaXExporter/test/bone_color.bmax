@@ -1,0 +1,5 @@
+
+<pe:blocktemplate>
+	<pe:blocks>{{1,0,0,253,5,{name="entity",attr={bz=19200,bx=19201,pz=0,py=0,class="EntityBlockBone",by=5,item_id=253,px=0,},},},{1,0,1,10,2193,},{1,0,2,10,240,},{1,1,0,10,3696,},{1,2,0,10,4003,},{1,3,0,253,4,{name="entity",attr={bz=19200,bx=19201,pz=0,py=0,class="EntityBlockBone",by=8,item_id=253,px=0,},},},{1,3,1,10,2577,},{1,3,2,10,4049,},}
+	</pe:blocks>
+</pe:blocktemplate>

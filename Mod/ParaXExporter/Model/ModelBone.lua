@@ -27,18 +27,7 @@ function ModelBone:GetDefaultAxis()
 	return self.axis;
 end
 
-
 function ModelBone:AddAnimationFrame(block, time, data)
-	block.nTimes = block.nTimes + 1;
-	block.nKeys = block.nKeys + 1;
-	block.type = 1;
-
 	table.insert(block.times, time);
 	table.insert(block.keys, data);
 end
-
-function ModelBone:AddAnimationRange(block, range)
-	block.nRanges = block.nRanges + 1;
-	table.insert(block.ranges, {range[1] - 1, range[2] - 1});
-end
-

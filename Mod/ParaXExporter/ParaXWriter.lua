@@ -93,7 +93,7 @@ function ParaXWriter:WriteHeader()
 	self.file:WriteInt(0);
 
 	-- type 0: PARAX_MODEL_ANIMATED
-	self.file:WriteInt(0);
+	self.file:WriteInt(4);
 
 	-- isAnimated 5: not understand(AnimationBitwise;# boolean animBones,animTextures)
 	self.file:WriteInt(5);
@@ -383,8 +383,8 @@ end
 
 function ParaXWriter:WriteXBones()
 	local bones = self.model.m_bones;
-	local nbones = #bones
-	
+	local nbones = #bones;
+	print("bone_count", nbones);
 	self:WriteName("XBones");
 	self:WriteToken("{");
 	-- int list 
@@ -392,7 +392,11 @@ function ParaXWriter:WriteXBones()
 	-- XViews
 	-- no need to do anything, since there is only one view. all view 0 information are duplicated in other nodes.
 	-- count 0 
-	self.file:WriteInt(29);
+	if nbones > 0 then
+		self.file:WriteInt(29);
+	else
+		self.file:WriteInt(1);
+	end
 	self.file:WriteInt(nbones);
 
 	for i, frameNode in ipairs(bones) do
@@ -433,7 +437,9 @@ function ParaXWriter:WriteXAnimations()
 	self.file:WriteInt(animation_count);
 
 	for i, anim in ipairs(animations) do 
-		self.file:WriteInt(anim.animID);
+		print("an", anim.animId);
+		self.file:WriteInt(anim.animId);
+		print("bn", anim.animId, anim.timeStart, anim.timeEnd);
 		self.file:WriteInt(anim.timeStart);
 		self.file:WriteInt(anim.timeEnd);
 		

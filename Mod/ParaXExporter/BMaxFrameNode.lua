@@ -3,9 +3,16 @@ NPL.load("(gl)Mod/ParaXExporter/BlockConfig.lua");
 NPL.load("(gl)Mod/ParaXExporter/BlockDirection.lua");
 NPL.load("(gl)Mod/ParaXExporter/Model/ModelBone.lua");
 NPL.load("(gl)Mod/ParaXExporter/Common.lua");
+NPL.load("(gl)Mod/ParaXExporter/BMaxModel.lua");
+NPL.load("(gl)script/ide/math/Quaternion.lua");
+NPL.load("(gl)script/ide/math/vector.lua");
 
+local Quaternion = commonlib.gettable("mathlib.Quaternion");
+local vector3d = commonlib.gettable("mathlib.vector3d");
 local BlockConfig = commonlib.gettable("Mod.ParaXExporter.BlockConfig");
 local BlockDirection = commonlib.gettable("Mod.ParaXExporter.BlockDirection");
+local BMaxModel = commonlib.gettable("Mod.ParaXExporter.BMaxModel");
+
 
 local BMaxFrameNode = commonlib.inherit(commonlib.gettable("Mod.ParaXExporter.BMaxNode"), commonlib.gettable("Mod.ParaXExporter.BMaxFrameNode"));
 local vector3d = commonlib.gettable("mathlib.vector3d");
@@ -14,6 +21,10 @@ local Common = commonlib.gettable("Mod.ParaXExporter.Common")
 
 function BMaxFrameNode:ctor()
 	self.m_nParentIndex = -1;
+	self.bone = ModelBone:new();
+
+	self.startFrame = 0;
+	self.endFrame = 0;
 end
 
 function BMaxFrameNode:init(model, x, y, z, template_id, block_data, bone_index)
@@ -24,7 +35,6 @@ function BMaxFrameNode:init(model, x, y, z, template_id, block_data, bone_index)
 	self.template_id = template_id;
 	self.block_data = block_data;
 	self.bone_index = bone_index;
-	self.bone = ModelBone:new();
 	self.bone_name = nil;
 	self.m_children = {};
 
@@ -54,6 +64,33 @@ function BMaxFrameNode:GetParent()
 		end
 	end
 	return nil;
+end
+
+function BMaxFrameNode:GetColor()
+	if self.m_color ~= 0 then
+		return self.m_color;
+	end
+	
+	local pParentNode = self:GetParent();
+	local mySide = BlockDirection:GetBlockSide(self.block_data);
+	local myOpSide = BlockDirection:GetOpSide(mySide);
+
+	for i = 0, 5 do
+		local side = BlockDirection:GetBlockSide((myOpSide + i) % 6);
+		if side ~= mySide or pParentNode == nil then
+			local neighbourNode = self:GetNeighbour(side);
+			if neighbourNode and neighbourNode.template_id ~= BMaxModel.BoneBlockId then
+				self.m_color = neighbourNode:GetColor();
+				return self.m_color;
+			end
+		end
+	end
+
+	if pParentNode then 
+		self.m_color = pParentNode:GetColor();
+	end
+
+	return self.m_color;
 end
 
 function BMaxFrameNode:AutoSetBoneName()
@@ -107,10 +144,12 @@ function BMaxFrameNode:AutoSetBoneName()
 			end
 		end
 		self.bone_name = bone_name;
+		print("bone_name",  self.bone_name);
 	end
 end
 
 function BMaxFrameNode:GetParentBone(bRefresh)
+	print("index", self:GetIndex());
 	if bRefresh then
 
 		self:SetParentIndex(-1);
@@ -121,6 +160,8 @@ function BMaxFrameNode:GetParentBone(bRefresh)
 
 		local side = BlockDirection:GetBlockSide(self.block_data);
 		local offset = BlockDirection:GetOffsetBySide(side);
+		print("side", side);
+		print("offset", offset.x, offset.y, offset.z);
 
 		local dx = offset.x;
 		local dy = offset.y;
@@ -137,7 +178,6 @@ function BMaxFrameNode:GetParentBone(bRefresh)
 
 			local parent = self.model:GetFrameNode(x, y, z);
 			if (parent) then
-				
 				local parentSide = BlockDirection:GetBlockSide(parent.block_data);
 				local opSide = BlockDirection:GetOpSide(parentSide);
 				if opSide ~= side or (dx + dy + dz) < 0 then
@@ -200,28 +240,34 @@ function BMaxFrameNode:HasParent()
 	return m_nParentIndex >= 0;
 end
 
-function BMaxFrameNode:AddBoneAnimation(time, data, range, anim)
+function BMaxFrameNode:AddBoneAnimation(startTime, endTime, time, data, range, anim)
 
 	local block = nil;
 	if anim == "rot" then
 		block = self.bone.rotation;	
 	elseif anim == "trans" then
-		block = self.bone.translation
+		block = self.bone.translation;
 	elseif anim == "scale" then
 		block = self.bone.scaling;
 	end
 
+	local currentRange = block.nRanges;
 	if block then
 		for k , v in ipairs(data) do
 			if time[k] and data[k] then
-				self.bone:AddAnimationFrame(block, time[k], data[k]);
+				self.bone:AddAnimationFrame(block, startTime + time[k], data[k]);
 			end
 		end
 	end
-	
-	self.bone:AddAnimationRange(block, range);
 end
 
 function BMaxFrameNode:ToBoneNode()
 	return self;
+end
+
+function BMaxFrameNode:GetAxis()
+	local mySide = BlockDirection:GetBlockSide(self.block_data);
+	local offset = BlockDirection:GetOffsetBySide(BlockDirection:GetOpSide(mySide));
+	print("axis", offset.x, offset.y, offset.z);
+	return vector3d:new(offset.x, offset.y, offset.z);
 end

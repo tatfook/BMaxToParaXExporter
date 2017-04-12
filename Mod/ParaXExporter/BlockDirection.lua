@@ -8,7 +8,7 @@ BlockDirection.top = 4;
 BlockDirection.bottom = 5;
 BlockDirection.none = 6;
 
-BlockDirection.s_oppositeDirection = {BlockDirection.right, BlockDirection.left, BlockDirection.back, BlockDirection.front, BlockDirection.top, BlockDirection.none};
+BlockDirection.s_oppositeDirection = {BlockDirection.right, BlockDirection.left, BlockDirection.back, BlockDirection.front, BlockDirection.bottom, BlockDirection.top, BlockDirection.none};
 
 function BlockDirection:GetBlockSide(v)
 	if v == 1 then
@@ -53,4 +53,8 @@ end
 
 function BlockDirection:GetOpSide(side)
 	return BlockDirection.s_oppositeDirection[side + 1];
+end
+
+function BlockDirection:IsGroundSide(side)
+	return side ~= BlockDirection.top and side ~= BlockDirection.bottom;
 end

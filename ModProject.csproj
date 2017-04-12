@@ -40,7 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Mod\ParaXExporter\test\template.txt" />
+    <Content Include="Mod\ParaXExporter\template.txt" />
     <Content Include="script/**" />
     <Content Include="Mod/ParaXExporter\main.lua" />
     <Content Include="Mod/ParaXExporter\ParaXWriter.lua" />
@@ -50,11 +50,12 @@
     <None Include="Mod\ParaXExporter\BlockCommon.lua" />
     <None Include="Mod\ParaXExporter\BlockDirection.lua" />
     <None Include="Mod\ParaXExporter\BlockModel.lua" />
-    <None Include="Mod\ParaXExporter\BMaxParser.lua" />
+    <None Include="Mod\ParaXExporter\BMaxMovieBlockNode.lua" />
     <None Include="Mod\ParaXExporter\BMaxNode.lua" />
     <None Include="Mod\ParaXExporter\BMaxFrameNode.lua" />
     <None Include="Mod\ParaXExporter\BMaxAnimGenerator.lua" />
     <None Include="Mod\ParaXExporter\BMaxModel.lua" />
+    <None Include="Mod\ParaXExporter\BMaxBlockSignNode.lua" />
     <None Include="Mod\ParaXExporter\Common.lua" />
     <None Include="Mod\ParaXExporter\BlockConfig.lua" />
     <None Include="Mod\ParaXExporter\Model\AnimationBlock.lua" />
@@ -68,11 +69,13 @@
     <None Include="Mod\ParaXExporter\ParaXMovieBlock.lua" />
     <None Include="Mod\ParaXExporter\ParaXActor.lua" />
     <None Include="Mod\ParaXExporter\ParaXModel.lua" />
+    <None Include="Mod\ParaXExporter\test\bone_color.bmax" />
     <None Include="Mod\ParaXExporter\test\input.bmax">
       <SubType>Designer</SubType>
     </None>
     <None Include="Mod\ParaXExporter\test\kite.bmax" />
     <None Include="Mod\ParaXExporter\test\testParaXExporter.lua" />
+    <None Include="Mod\ParaXExporter\test\test_muti_movie_block.bmax" />
     <None Include="README.md" />
     <None Include="Run.bat" />
   </ItemGroup>

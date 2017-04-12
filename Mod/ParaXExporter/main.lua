@@ -40,7 +40,7 @@ end
 function ParaXExporter:init()
 	LOG.std(nil, "info", "ParaXExporter", "plugin initialized");
 	--self:RegisterExporter();
-	self:RegisterCommand();
+	--self:RegisterCommand();
 end
 
 function ParaXExporter:OnLogin()
@@ -110,14 +110,13 @@ end
 -- @param input_file: *.bmax file name
 -- @param output_file: *.x fileame
 function ParaXExporter:ConvertFromBMaxToParaX(input_file, output_file)
-	local parser = BMaxParser:new();
+	local model = BMaxModel:new();
 	local writer = ParaXWriter:new();
 
 	print("input", input_file, output_file);
-	parser:Load(input_file);
-	local actor_model = parser.actor_model;
-	if actor_model then 
-		writer:LoadModel(parser.actor_model);
+	model:Load(input_file);
+	if model then 
+		writer:LoadModel(model.actor_model);
 		writer:SaveAsBinary(output_file);
 	end
 end

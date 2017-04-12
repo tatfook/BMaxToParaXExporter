@@ -16,7 +16,8 @@ NPL.load("(gl)script/ide/XPath.lua");
 NPL.load("(gl)script/ide/math/ShapeAABB.lua");
 NPL.load("(gl)Mod/ParaXExporter/BMaxNode.lua");
 NPL.load("(gl)Mod/ParaXExporter/BMaxFrameNode.lua");
-NPL.load("(gl)Mod/ParaXExporter/BlockModel.lua");
+NPL.load("(gl)Mod/ParaXExporter/BMaxMovieBlockNode.lua");
+NPL.load("(gl)Mod/ParaXExporter/BMaxBlockSignNode.lua");
 NPL.load("(gl)Mod/ParaXExporter/BlockCommon.lua");
 NPL.load("(gl)Mod/ParaXExporter/BlockConfig.lua");
 NPL.load("(gl)Mod/ParaXExporter/Model/ModelGeoset.lua");
@@ -25,7 +26,9 @@ NPL.load("(gl)Mod/ParaXExporter/Model/ModelRenderPass.lua");
 NPL.load("(gl)Mod/ParaXExporter/Model/ModelAnimation.lua");
 NPL.load("(gl)Mod/ParaXExporter/Model/ModelBone.lua");
 NPL.load("(gl)Mod/ParaXExporter/Common.lua");
+NPL.load("(gl)script/ide/math/Quaternion.lua");
 
+local Quaternion = commonlib.gettable("mathlib.Quaternion");
 local ModelGeoset = commonlib.gettable("Mod.ParaXExporter.Model.ModelGeoset");
 local ModelVertice = commonlib.gettable("Mod.ParaXExporter.Model.ModelVertice");
 local ModelRenderPass = commonlib.gettable("Mod.ParaXExporter.Model.ModelRenderPass");
@@ -36,6 +39,8 @@ local BlockModel = commonlib.gettable("Mod.ParaXExporter.BlockModel");
 local BlockConfig = commonlib.gettable("Mod.ParaXExporter.BlockConfig");
 local BMaxNode = commonlib.gettable("Mod.ParaXExporter.BMaxNode");
 local BMaxFrameNode = commonlib.gettable("Mod.ParaXExporter.BMaxFrameNode");
+local BMaxMovieBlockNode = commonlib.gettable("Mod.ParaXExporter.BMaxMovieBlockNode");
+local BMaxBlockSignNode = commonlib.gettable("Mod.ParaXExporter.BMaxBlockSignNode");
 local ShapeAABB = commonlib.gettable("mathlib.ShapeAABB");
 local lshift = mathlib.bit.lshift;
 local Common = commonlib.gettable("Mod.ParaXExporter.Common")
@@ -49,14 +54,30 @@ BMaxModel.m_bAutoScale = true;
 BMaxModel.MaxBoneLengthHorizontal = 50;
 BMaxModel.MaxBoneLengthVertical = 100;
 
+BMaxModel.ModelTypeBlockModel= 0;
+BMaxModel.ModelTypeMovieModel = 1;
+
+BMaxModel.BoneBlockId = 253;
+BMaxModel.MovieBlockId = 228;
+BMaxModel.BlockSignId = 211;
+BMaxModel.ReapeaterId = 197;
+BMaxModel.WiresId = 189;
+BMaxModel.ActorId = 10062;
+
+BMaxModel.MovieBlockInterval = 1000;
 
 function BMaxModel:ctor()
+	-- if it is the movie bmax file;
+	self.actor_model = nil;
+
 	self.m_blockAABB = nil;
 	self.m_centerPos = nil;
 	self.m_fScale = 1;
+	self.m_modelType = 0;
 	self.m_nodes = {};
 	self.m_blockModels = {};
-
+	self.m_movieBlocks = {};
+	
 	self.m_geosets = {};
 	self.m_bones = {};
 	self.m_renderPasses = {};
@@ -96,14 +117,19 @@ end
 -- @param blocks: array of {x,y,z,id, data, serverdata}
 function BMaxModel:LoadFromBlocks(blocks)
 	self:InitFromBlocks(blocks);
-	self:ParseBlockFrames();		
-	--self:CalculateBoneWeights();
-	self:CalculateVisibleBlocks();
-	if(self.m_bAutoScale)then
-		self:ScaleModels();
+
+	if self.m_modelType == BMaxModel.ModelTypeMovieModel then
+		self:ParseMovieBlocks();
+	elseif self.m_modelType == BMaxModel.ModelTypeBlockModel then
+		self:ParseBlockFrames();		
+		--self:CalculateBoneWeights();
+		self:CalculateVisibleBlocks();
+		if(self.m_bAutoScale)then
+			self:ScaleModels();
+		end
+		self:FillVerticesAndIndices();
+		--self:CreateDefaultAnimation();
 	end
-	self:FillVerticesAndIndices();
-	self:CreateDefaultAnimation();
 end
 
 function BMaxModel:ParseHeader(xmlRoot)
@@ -130,6 +156,7 @@ end
 -- load from array of blocks
 -- @param blocks: array of {x,y,z,id, data, serverdata}
 function BMaxModel:InitFromBlocks(blocks)
+	print("blocks", blocks);
 	if(not blocks) then
 		return
 	end
@@ -142,9 +169,18 @@ function BMaxModel:InitFromBlocks(blocks)
 		local z = v[3];
 		local template_id = v[4];
 		local block_data = v[5];
+		local block_content = v[6];
 		aabb:Extend(x,y,z);
-
-		if template_id == 253 then
+		
+		if template_id == BMaxModel.MovieBlockId then
+			self.m_modelType = BMaxModel.ModelTypeMovieModel;
+			local movieNode = BMaxMovieBlockNode:new():init(self, x, y, z, template_id, block_data, block_content);
+			table.insert(nodes, movieNode);
+			table.insert(self.m_movieBlocks, movieNode);
+		elseif template_id == BMaxModel.BlockSignId then
+			local blockSignNode = BMaxBlockSignNode:new():init(self, x, y, z, template_id, block_data, block_content);
+			table.insert(nodes, blockSignNode);
+		elseif template_id == BMaxModel.BoneBlockId then
 			bHasBoneBlock = true;
 
 			local nBoneIndex = #self.m_bones;
@@ -223,6 +259,47 @@ function BMaxModel:GetNodeIndex(x,y,z)
 		return
 	end
 	return x + lshift(z, 8) + lshift(y, 16);
+end
+
+function BMaxModel:ParseMovieBlocks()
+	
+	for _, movieBlock in ipairs(self.m_movieBlocks) do
+		movieBlock:ParseMovieInfo();
+		movieBlock:ConnectMovieBlock();
+	end
+
+	local assetName;
+	local firstBlock;
+	-- parse mesh and vertice
+	for _, movieBlock in ipairs(self.m_movieBlocks) do
+		if not movieBlock:HasLastBlock() then
+			firstBlock = movieBlock;
+			firstBlock.animId = 0;
+			movieBlock:ParseActor();
+			assetName = movieBlock.asset_file;
+			self.actor_model = BMaxModel:new();
+			local actorFile = self:FindActorFile(assetName);
+			self.actor_model:Load(actorFile);
+		end
+	end
+
+	-- parse animation 
+	local startTime = 0;
+	self.actor_model:AddBoneAnimation(startTime, firstBlock.movieLength, 4, nil, 0);
+	startTime = startTime + firstBlock.movieLength + BMaxModel.MovieBlockInterval;
+	local next = firstBlock.nextBlock;
+
+	while next ~= -1 do
+		local currentBlock = self.m_nodes[next];
+		currentBlock:ParseActor(assetName);
+		local bone_anim = currentBlock:GetAnimData();
+		local endTime = startTime + currentBlock.movieLength;
+		if bone_anim then 
+			self.actor_model:AddBoneAnimation(startTime, endTime, 4, bone_anim, currentBlock.animId);
+		end
+		startTime = startTime + currentBlock.movieLength + BMaxModel.MovieBlockInterval;
+		next = currentBlock.nextBlock;
+	end
 end
 
 function BMaxModel:ParseBlockFrames()
@@ -306,12 +383,11 @@ function BMaxModel:FillVerticesAndIndices()
 		pass.indexCount = pass.indexCount + nIndexCount;
 
 		local vertex_weight = 0xff;
-		local color = model.m_color;
-		for _, vertice in ipairs(vertices) do
+		for i, vertice in ipairs(vertices) do
 			local modelVertex = ModelVertice:new();
 			modelVertex.pos = vertice.position;
 			modelVertex.normal = vertice.normal;
-			modelVertex.color1 = color;
+			modelVertex.color0 = vertice.color2;
 
 			table.insert(self.m_vertices, modelVertex);
 
@@ -339,25 +415,107 @@ function BMaxModel:FillVerticesAndIndices()
 	self.m_maxExtent = aabb:GetMax();
 end	
 
-function BMaxModel:AddBoneAnimData(anim_data)
-	for k, v in pairs(anim_data) do
-		if string.find(k, "bone") == 1 then
-			local name = v.name;
-			if name then
-				local bone, anim = self:GetBone(name);
+function BMaxModel:CalculateBoneWeights()
+		-- pass 1: calculate all blocks directly connected to bone block and share the same bone color
+		for _, bone in ipairs(m_bones) do
+			self:CalculateBoneSkin(bone);
+		end
 
-				if bone then
-					local time = v.times;
-					local data = v.data;
-					local range = v.ranges;
+		--[[// pass 2: from remaining blocks, calculate blocks which are connected to bones, but with different colors to those bones. 
+		for (auto bone : m_bones)
+		{
+			BlockDirection::Side mySide = BlockDirection::GetBlockSide(bone->block_data);
+			for (int i = 0; i < 6; i++)
+			{
+				BlockDirection::Side side = BlockDirection::GetBlockSide(i);
+				if (mySide != side)
+				{
+					CalculateBoneWeightForBlock(bone.get(), bone->GetNeighbour(side), false);
+				}
+			}
+		}
 
-					bone:AddBoneAnimation(time, data, range[1], anim);
+		// pass 3: from remaining blocks, calculate blocks which are connected to other binded blocks, but with different colors to those blocks.
+		for (auto& item : m_nodes)
+		{
+			CalculateBoneWeightFromNeighbours(item.second.get());
+		}--]]
+end
+
+function BMaxModel:CalculateBoneSkin(bone)
+	
+end
+
+function BMaxModel:AddBoneAnimation(startTime, endTime, moveSpeed, anim_data, animId)
+	local anim = ModelAnimation:new();
+	anim.timeStart = startTime;
+	anim.timeEnd = endTime;
+	anim.animId = animId;
+	anim.moveSpeed = moveSpeed;
+	table.insert(self.m_animations, anim);
+
+	for _, frameNode in ipairs(self.m_bones) do
+		local bone = frameNode.bone;
+
+		local tranBlock = bone.translation;
+		local rotBlock =  bone.rotation;
+		local scaleBlock = bone.scaling;
+		
+		tranBlock:AddKey({0, 0, 0});
+		tranBlock:AddTime(startTime);
+		rotBlock:AddKey(Quaternion:new():FromAngleAxis(0, frameNode:GetAxis()));
+		rotBlock:AddTime(startTime);
+		scaleBlock:AddKey({1, 1, 1});
+		scaleBlock:AddTime(startTime);
+	end
+
+	if anim_data then 
+		for k, v in pairs(anim_data) do
+			if string.find(k, "bone") == 1 then
+				local name = v.name;
+				if name then
+					local frameNode, anim = self:GetBone(name);
+					if frameNode then
+						local time = v.times;
+						local data = v.data;
+						local range = v.ranges;
+						local bone = frameNode.bone;
+
+						local block = nil;
+						if anim == "rot" then
+							block = bone.rotation;	
+						elseif anim == "trans" then
+							block = bone.translation;
+						elseif anim == "scale" then
+							block = bone.scaling;
+						end
+					
+						if block then
+							for k , v in ipairs(data) do
+								if time[k] and data[k] then
+									block:AddKey(data[k]);
+									block:AddTime(time[k] + startTime);
+								end
+							end
+						end
+					end
 				end
 			end
 		end
 	end
-end
 
+	for _, frameNode in ipairs(self.m_bones) do
+		local bone = frameNode.bone;
+
+		local tranBlock = bone.translation;
+		local rotBlock =  bone.rotation;
+		local scaleBlock = bone.scaling;
+		
+		tranBlock:AddRange();
+		rotBlock:AddRange();
+		scaleBlock:AddRange();
+	end
+end
 function BMaxModel:GetBone(bone_name)
 	for _, bone in ipairs(self.m_bones) do
 		if string.find(bone_name, bone.bone_name) == 1 then
@@ -379,10 +537,15 @@ end
 	
 
 function BMaxModel:CreateDefaultAnimation()
-	--self:CreateRootBone();
-
+	if #self.m_bones == 0 then
+		self:CreateRootBone();
+	end
 	
 	self:AddIdleAnimation();
+end
+
+function BMaxModel:CreateRootBone()
+	table.insert(self.m_bones, BMaxFrameNode:new());
 end
 
 function BMaxModel:AddIdleAnimation()
@@ -414,4 +577,25 @@ end
 
 function BMaxModel:GetMaxExtent()
 	return self.m_maxExtent;
+end
+
+-- find in world directory, and then find in the current bmax file directory. 
+-- return full path
+function BMaxModel:FindActorFile(actorFileName)
+	local actorFileName_ = GameLogic.GetWorldDirectory()..actorFileName;
+	if(not ParaIO.DoesFileExist(actorFileName_)) then
+		actorFileName_ = self:GetFileName():gsub("[^/]+$", "") .. actorFileName:match("([^/]+)$");
+		if(not ParaIO.DoesFileExist(actorFileName_)) then
+			actorFileName_ = actorFileName;
+		end
+	end
+	return actorFileName_;
+end
+
+function BMaxParser:GetActorFileName()
+	return self.actorFilename or "";
+end
+
+function BMaxParser:SetActorFileName(actorFileName)
+	self.actorFilename = actorFileName;
 end
