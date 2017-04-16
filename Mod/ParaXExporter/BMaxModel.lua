@@ -592,10 +592,10 @@ function BMaxModel:FindActorFile(actorFileName)
 	return actorFileName_;
 end
 
-function BMaxParser:GetActorFileName()
+function BMaxModel:GetActorFileName()
 	return self.actorFilename or "";
 end
 
-function BMaxParser:SetActorFileName(actorFileName)
+function BMaxModel:SetActorFileName(actorFileName)
 	self.actorFilename = actorFileName;
 end
