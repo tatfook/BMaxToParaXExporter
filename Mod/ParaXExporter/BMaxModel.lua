@@ -584,7 +584,7 @@ end
 function BMaxModel:FindActorFile(actorFileName)
 	local actorFileName_ = GameLogic.GetWorldDirectory()..actorFileName;
 	if(not ParaIO.DoesFileExist(actorFileName_)) then
-		actorFileName_ = self:GetFileName():gsub("[^/]+$", "") .. actorFileName:match("([^/]+)$");
+		actorFileName_ = self:GetActorFileName():gsub("[^/]+$", "") .. actorFileName:match("([^/]+)$");
 		if(not ParaIO.DoesFileExist(actorFileName_)) then
 			actorFileName_ = actorFileName;
 		end
