@@ -105,6 +105,7 @@ end
 -- @param bmax_filename: load from *.bmax file
 function BMaxModel:Load(bmax_filename)
 	if(not bmax_filename)then return end
+	self:SetFileName(bmax_filename);
 	local xmlRoot = ParaXML.LuaXML_ParseFile(bmax_filename);
 	self:ParseHeader(xmlRoot);
 	local blocks = self:ParseBlocks(xmlRoot);
@@ -584,7 +585,7 @@ end
 function BMaxModel:FindActorFile(actorFileName)
 	local actorFileName_ = GameLogic.GetWorldDirectory()..actorFileName;
 	if(not ParaIO.DoesFileExist(actorFileName_)) then
-		actorFileName_ = self:GetActorFileName():gsub("[^/]+$", "") .. actorFileName:match("([^/]+)$");
+		actorFileName_ = self:GetFileName():gsub("[^/]+$", "") .. actorFileName:match("([^/]+)$");
 		if(not ParaIO.DoesFileExist(actorFileName_)) then
 			actorFileName_ = actorFileName;
 		end
@@ -592,10 +593,10 @@ function BMaxModel:FindActorFile(actorFileName)
 	return actorFileName_;
 end
 
-function BMaxModel:GetActorFileName()
-	return self.actorFilename or "";
+function BMaxModel:GetFileName()
+	return self.filename or "";
 end
 
-function BMaxModel:SetActorFileName(actorFileName)
-	self.actorFilename = actorFileName;
+function BMaxModel:SetFileName(filename)
+	self.filename = filename;
 end

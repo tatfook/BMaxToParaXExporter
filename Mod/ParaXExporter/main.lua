@@ -50,7 +50,7 @@ end
 function ParaXExporter:OnWorldLoad()
 	NPL.load("(gl)Mod/ParaXExporter/test/testParaXExporter.lua");
 	local testParaXExporter = commonlib.gettable("tests.testParaXExporter");
-	testParaXExporter:testStatic()
+	testParaXExporter:testStatic();
 end
 -- called when a world is unloaded. 
 
@@ -113,7 +113,6 @@ function ParaXExporter:ConvertFromBMaxToParaX(input_file, output_file)
 	local model = BMaxModel:new();
 	local writer = ParaXWriter:new();
 
-	print("input", input_file, output_file);
 	model:Load(input_file);
 	if model then 
 		writer:LoadModel(model.actor_model);
