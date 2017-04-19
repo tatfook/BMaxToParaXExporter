@@ -109,6 +109,19 @@ function BMaxMovieBlockNode:ParseActor(name)
 	end
 end
 
+function BMaxMovieBlockNode:ParseMoveSpeed()
+	if self.actor_table then 
+		local timeseries = self.actor_table.timeseries;
+		if timeseries then
+			local speedScaleTable = timeseries.speedscale;
+			local speed = speedScaleTable.data;
+			return speed[1];
+		end
+	end
+
+	return 0;
+end
+
 function BMaxMovieBlockNode:GetAssetName(actor_table)
 	if self.asset_file then
 		return self.asset_file;

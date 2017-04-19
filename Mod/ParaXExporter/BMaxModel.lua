@@ -166,7 +166,6 @@ function BMaxModel:InitFromBlocks(blocks)
 	local aabb = ShapeAABB:new();
 	local bHasBoneBlock = false;
 	for k,v in ipairs(blocks) do
-		Common:PrintTable(v);
 		local x = v[1];
 		local y = v[2];
 		local z = v[3];
@@ -291,7 +290,7 @@ function BMaxModel:ParseMovieBlocks()
 
 	-- parse animation 
 	local startTime = 0;
-	self.actor_model:AddBoneAnimation(startTime, firstBlock.movieLength, 4, nil, 0);
+	self.actor_model:AddBoneAnimation(startTime, firstBlock.movieLength, 0, nil, 0);
 	startTime = startTime + firstBlock.movieLength + BMaxModel.MovieBlockInterval;
 	local next = firstBlock.nextBlock;
 
@@ -299,9 +298,10 @@ function BMaxModel:ParseMovieBlocks()
 		local currentBlock = self.m_nodes[next];
 		currentBlock:ParseActor(assetName);
 		local bone_anim = currentBlock:GetAnimData();
+		local moveSpeed = currentBlock:ParseMoveSpeed();
 		local endTime = startTime + currentBlock.movieLength;
 		if bone_anim then 
-			self.actor_model:AddBoneAnimation(startTime, endTime, 4, bone_anim, currentBlock.animId);
+			self.actor_model:AddBoneAnimation(startTime, endTime, moveSpeed, bone_anim, currentBlock.animId);
 		end
 		startTime = startTime + currentBlock.movieLength + BMaxModel.MovieBlockInterval;
 		next = currentBlock.nextBlock;
@@ -629,7 +629,7 @@ function BMaxModel:AddIdleAnimation()
 	anim.timeStart = 0;
 	anim.timeEnd = 30000;
 	anim.animID = 0;
-	anim.moveSpeed = 0.4;
+	anim.moveSpeed = 0;
 	table.insert(self.m_animations, anim);
 
 end
