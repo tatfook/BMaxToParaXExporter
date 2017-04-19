@@ -34,7 +34,7 @@ function BMaxFrameNode:init(model, x, y, z, template_id, block_data, bone_index)
 	self.z = z;
 	self.template_id = template_id;
 	self.block_data = block_data;
-	self.bone_index = bone_index;
+	self.n_index = bone_index;
 	self.bone_name = nil;
 	self.m_children = {};
 
@@ -48,9 +48,8 @@ end
 
 
 function BMaxFrameNode:UpdatePivot(m_fScale)
-	local x, y, z = self.model.m_centerPos[1] + BlockConfig.g_blockSize * 0.5, self.y + BlockConfig.g_blockSize * 0.5, self.z - self.model.m_centerPos[3] + BlockConfig.g_blockSize * 0.5;
+	local x, y, z = self.x - self.model.m_centerPos[1] + BlockConfig.g_blockSize * 0.5, self.y + BlockConfig.g_blockSize * 0.5, self.z - self.model.m_centerPos[3] + BlockConfig.g_blockSize * 0.5;
 	local pivot =  vector3d:new({x,y,z});
-	--pivot = pivot * 3;
 	self.bone.bUsePivot = true;
 	self.bone.pivot = pivot:MulByFloat(m_fScale);
 	self.bone.flags = 0;
@@ -149,7 +148,6 @@ function BMaxFrameNode:AutoSetBoneName()
 end
 
 function BMaxFrameNode:GetParentBone(bRefresh)
-	print("index", self:GetIndex());
 	if bRefresh then
 
 		self:SetParentIndex(-1);
@@ -160,8 +158,6 @@ function BMaxFrameNode:GetParentBone(bRefresh)
 
 		local side = BlockDirection:GetBlockSide(self.block_data);
 		local offset = BlockDirection:GetOffsetBySide(side);
-		print("side", side);
-		print("offset", offset.x, offset.y, offset.z);
 
 		local dx = offset.x;
 		local dy = offset.y;
@@ -190,7 +186,9 @@ function BMaxFrameNode:GetParentBone(bRefresh)
 	end
 end
 
-
+function BMaxFrameNode:GetBoneIndex()
+	return self.n_index;
+end
 
 function BMaxFrameNode:SetParentIndex(index)
 	self.m_nParentIndex = index;
@@ -198,7 +196,7 @@ function BMaxFrameNode:SetParentIndex(index)
 	local parent = self:GetParent();
 	if (parent) then
 		parent:AddChild(self);
-		self.bone.parent = parent.bone_index;
+		self.bone.parent = parent:GetBoneIndex();
 	end
 end
 
@@ -265,9 +263,12 @@ function BMaxFrameNode:ToBoneNode()
 	return self;
 end
 
+function BMaxFrameNode:GetBoneSide()
+	return BlockDirection:GetBlockSide(self.block_data);
+end
+
 function BMaxFrameNode:GetAxis()
-	local mySide = BlockDirection:GetBlockSide(self.block_data);
+	local mySide = self:GetBoneSide();
 	local offset = BlockDirection:GetOffsetBySide(BlockDirection:GetOpSide(mySide));
-	print("axis", offset.x, offset.y, offset.z);
 	return vector3d:new(offset.x, offset.y, offset.z);
 end

@@ -27,8 +27,11 @@ NPL.load("(gl)Mod/ParaXExporter/Model/ModelAnimation.lua");
 NPL.load("(gl)Mod/ParaXExporter/Model/ModelBone.lua");
 NPL.load("(gl)Mod/ParaXExporter/Common.lua");
 NPL.load("(gl)script/ide/math/Quaternion.lua");
+NPL.load("(gl)script/ide/math/BlockDirection.lua");
 
+local BlockEngine = commonlib.gettable("MyCompany.Aries.Game.BlockEngine")
 local Quaternion = commonlib.gettable("mathlib.Quaternion");
+local BlockDirection = commonlib.gettable("Mod.ParaXExporter.BlockDirection");
 local ModelGeoset = commonlib.gettable("Mod.ParaXExporter.Model.ModelGeoset");
 local ModelVertice = commonlib.gettable("Mod.ParaXExporter.Model.ModelVertice");
 local ModelRenderPass = commonlib.gettable("Mod.ParaXExporter.Model.ModelRenderPass");
@@ -54,7 +57,7 @@ BMaxModel.m_bAutoScale = true;
 BMaxModel.MaxBoneLengthHorizontal = 50;
 BMaxModel.MaxBoneLengthVertical = 100;
 
-BMaxModel.ModelTypeBlockModel= 0;
+BMaxModel.ModelTypeBlockModel = 0;
 BMaxModel.ModelTypeMovieModel = 1;
 
 BMaxModel.BoneBlockId = 253;
@@ -75,7 +78,6 @@ function BMaxModel:ctor()
 	self.m_fScale = 1;
 	self.m_modelType = 0;
 	self.m_nodes = {};
-	self.m_blockModels = {};
 	self.m_movieBlocks = {};
 	
 	self.m_geosets = {};
@@ -84,8 +86,9 @@ function BMaxModel:ctor()
 	self.m_indices = {};
 	self.m_vertices = {};
 	self.m_animations = {};
-	self.m_minExtent = nil;
-	self.m_maxExtent = nil;
+	self.m_minExtent = {0, 0, 0};
+	self.m_maxExtent = {0, 0, 0};
+	self.m_nodeIndexes = {};
 end
 
 -- whether we will resize the model to self:GetMaxModelSize();
@@ -118,18 +121,17 @@ end
 -- @param blocks: array of {x,y,z,id, data, serverdata}
 function BMaxModel:LoadFromBlocks(blocks)
 	self:InitFromBlocks(blocks);
-
 	if self.m_modelType == BMaxModel.ModelTypeMovieModel then
 		self:ParseMovieBlocks();
 	elseif self.m_modelType == BMaxModel.ModelTypeBlockModel then
 		self:ParseBlockFrames();		
-		--self:CalculateBoneWeights();
+		self:CalculateBoneWeights();
 		self:CalculateVisibleBlocks();
 		if(self.m_bAutoScale)then
 			self:ScaleModels();
 		end
 		self:FillVerticesAndIndices();
-		--self:CreateDefaultAnimation();
+		self:CreateDefaultAnimation();
 	end
 end
 
@@ -157,7 +159,6 @@ end
 -- load from array of blocks
 -- @param blocks: array of {x,y,z,id, data, serverdata}
 function BMaxModel:InitFromBlocks(blocks)
-	print("blocks", blocks);
 	if(not blocks) then
 		return
 	end
@@ -165,12 +166,14 @@ function BMaxModel:InitFromBlocks(blocks)
 	local aabb = ShapeAABB:new();
 	local bHasBoneBlock = false;
 	for k,v in ipairs(blocks) do
+		Common:PrintTable(v);
 		local x = v[1];
 		local y = v[2];
 		local z = v[3];
 		local template_id = v[4];
 		local block_data = v[5];
-		local block_content = v[6];
+		local block_content = BlockEngine:GetBlockEntityData(v[1], v[2], v[3]);
+		--Common:PrintTable(block_content);
 		aabb:Extend(x,y,z);
 		
 		if template_id == BMaxModel.MovieBlockId then
@@ -209,9 +212,9 @@ function BMaxModel:InitFromBlocks(blocks)
 
 	print("center", self.m_centerPos[1], self.m_centerPos[2], self.m_centerPos[3]);
 
-	local offset_x = blockMinX;
-	local offset_y = blockMinY;
-	local offset_z = blockMinZ;
+	local offset_x = math.floor(blockMinX);
+	local offset_y = math.floor(blockMinY);
+	local offset_z = math.floor(blockMinZ);
 
 	for k,node in ipairs(nodes) do
 		node.x = node.x - offset_x;
@@ -219,10 +222,11 @@ function BMaxModel:InitFromBlocks(blocks)
 		node.z = node.z - offset_z;
 		self:InsertNode(node);
 	end
+	table.sort(self.m_nodeIndexes);
 	--set scaling;
 	if (self.m_bAutoScale) then
 		local fMaxLength = math.max(math.max(height, width), depth) + 1;
-		print("fMaxLength", fMaxLength);
+		print("fMaxLength", fMaxLength, blockMaxZ, blockMinZ);
 		self.m_fScale = self:CalculateScale(fMaxLength);
 		print("m_fScale", self.m_fScale);
 		if (bHasBoneBlock) then 
@@ -244,6 +248,7 @@ function BMaxModel:InsertNode(node)
 	local index = self:GetNodeIndex(node.x,node.y,node.z);
 	if(index)then
 		self.m_nodes[index] = node;
+		table.insert(self.m_nodeIndexes, index);
 	end
 end
 
@@ -318,20 +323,21 @@ function BMaxModel:ParseBlockFrames()
 end
 
 function BMaxModel:CalculateVisibleBlocks()
-	for _, node in pairs(self.m_nodes) do
-		local cube = node:TessellateBlock();
-		if(cube:GetVerticesCount() > 0)then
-			table.insert(self.m_blockModels,cube);
-		end
+	for _, index in ipairs(self.m_nodeIndexes) do
+		local node = self.m_nodes[index];
+		node:TessellateBlock();
 	end
 end
 
 function BMaxModel:ScaleModels()
 	local scale = self.m_fScale;
-	for _,cube in ipairs(self.m_blockModels) do
-		for i, vertex in ipairs(cube:GetVertices()) do
-			vertex.position:MulByFloat(scale);
-
+	for _, index in ipairs(self.m_nodeIndexes) do
+		local node = self.m_nodes[index];
+		local cube = node:GetCube();
+		if cube then
+			for i, vertex in ipairs(cube:GetVertices()) do
+				vertex.position:MulByFloat(scale);
+			end
 		end
 	end
 end
@@ -339,18 +345,17 @@ end
 function BMaxModel:GetTotalTriangleCount()
 	local face_cont = 6;
 	local cnt = 0;
-	for _, cube in ipairs(self.m_blockModels) do
-		cnt = cnt + cube:GetFaceCount()*2;
+	for _, index in ipairs(self.m_nodeIndexes) do
+		local node = self.m_nodes[index];
+		local cube = node:GetCube();
+		if cube then 
+			cnt = cnt + cube:GetFaceCount()*2;
+		end 
 	end	
 	return cnt;
 end
 
-function BMaxModel:FillVerticesAndIndices()
-	
-	if self.m_blockModels == nil or #self.m_blockModels == 0 then
-		return;
-	end
-	
+function BMaxModel:FillVerticesAndIndices()	
 	local aabb = ShapeAABB:new();
 	local geoset = self:AddGeoset();
 	local pass = self:AddRenderPass();
@@ -360,91 +365,159 @@ function BMaxModel:FillVerticesAndIndices()
 	local total_count = 0;
 	local nStartVertex = 0;
 
-	for _ , model in ipairs(self.m_blockModels) do
-		local nVertices = model:GetVerticesCount();
+	--print("node", Common:PrintNode(self.m_nodes));
+	for _, index in ipairs(self.m_nodeIndexes) do
+		local node = self.m_nodes[index];
+		local cube = node:GetCube();
+		if cube then 
+			local nVertices = cube:GetVerticesCount();
 
-		local vertices = model:GetVertices();
-		local nFace = model:GetFaceCount();
+			local vertices = cube:GetVertices();
+			local nFace = cube:GetFaceCount();
 
-		local nIndexCount = nFace * 6;
+			local nIndexCount = nFace * 6;
 
-		if nIndexCount + geoset:GetIndexCount() >= 0xffff then
-			nStartIndex = #self.m_indices;
-			geoset = self:AddGeoset();
-			pass = self:AddRenderPass();
+			if nIndexCount + geoset:GetIndexCount() >= 0xffff then
+				nStartIndex = #self.m_indices;
+				geoset = self:AddGeoset();
+				pass = self:AddRenderPass();
 	
-			pass:SetGeoset(geoset.id);
-			pass:SetStartIndex(nStartIndex);
-			geoset:SetVertexStart(total_count);
-			nStartVertex = 0;
+				pass:SetGeoset(geoset.id);
+				pass:SetStartIndex(nStartIndex);
+				geoset:SetVertexStart(total_count);
+				nStartVertex = 0;
+			end
+
+			geoset.vstart = geoset.vstart + nVertices;
+			geoset.icount = geoset.icount+ nIndexCount;
+			pass.indexCount = pass.indexCount + nIndexCount;
+
+			local vertex_weight = 255;
+			--print("bone_index", node.x, node.y, node.z, node:GetBoneIndex());
+			for i, vertice in ipairs(vertices) do
+				local modelVertex = ModelVertice:new();
+				modelVertex.pos = vertice.position;
+				modelVertex.normal = vertice.normal;
+				modelVertex.color0 = vertice.color2;
+				modelVertex.weights[1] = vertex_weight;
+				modelVertex.bones[1] = node:GetBoneIndex();
+
+				table.insert(self.m_vertices, modelVertex);
+
+				aabb:Extend(modelVertex.pos);
+			end 
+
+
+			for k = 0, nFace - 1 do
+				local start_index = k * 4 + nStartVertex;
+				table.insert(self.m_indices, start_index + 0);
+				table.insert(self.m_indices, start_index + 1);
+				table.insert(self.m_indices, start_index + 2);
+				table.insert(self.m_indices, start_index + 0);
+				table.insert(self.m_indices, start_index + 2);
+				table.insert(self.m_indices, start_index + 3);
+			end
+
+			total_count = total_count + nVertices;
+			nStartVertex = nStartVertex + nVertices;
 		end
-
-		geoset.vstart = geoset.vstart + nVertices;
-		geoset.icount = geoset.icount+ nIndexCount;
-		pass.indexCount = pass.indexCount + nIndexCount;
-
-		local vertex_weight = 0xff;
-		for i, vertice in ipairs(vertices) do
-			local modelVertex = ModelVertice:new();
-			modelVertex.pos = vertice.position;
-			modelVertex.normal = vertice.normal;
-			modelVertex.color0 = vertice.color2;
-
-			table.insert(self.m_vertices, modelVertex);
-
-			aabb:Extend(modelVertex.pos);
-		end 
-
-		local vertex_weight = 0xff;
-
-		for k = 0, nFace - 1 do
-			local start_index = k * 4 + nStartVertex;
-			table.insert(self.m_indices, start_index + 0);
-			table.insert(self.m_indices, start_index + 1);
-			table.insert(self.m_indices, start_index + 2);
-			table.insert(self.m_indices, start_index + 0);
-			table.insert(self.m_indices, start_index + 2);
-			table.insert(self.m_indices, start_index + 3);
-		end
-
-		total_count = total_count + nVertices;
-		nStartVertex = nStartVertex + nVertices;
+		
 	end
 
-	--print("m_minExtent", self.m_minExtent[1], self.m_minExtent[2], self.m_minExtent(3));
 	self.m_minExtent = aabb:GetMin();
 	self.m_maxExtent = aabb:GetMax();
+	print("m_minExtent", self.m_minExtent[1], self.m_minExtent[2], self.m_minExtent[3]);
 end	
 
 function BMaxModel:CalculateBoneWeights()
 		-- pass 1: calculate all blocks directly connected to bone block and share the same bone color
-		for _, bone in ipairs(m_bones) do
+		for _, bone in ipairs(self.m_bones) do
 			self:CalculateBoneSkin(bone);
+
 		end
 
-		--[[// pass 2: from remaining blocks, calculate blocks which are connected to bones, but with different colors to those bones. 
-		for (auto bone : m_bones)
-		{
-			BlockDirection::Side mySide = BlockDirection::GetBlockSide(bone->block_data);
-			for (int i = 0; i < 6; i++)
-			{
-				BlockDirection::Side side = BlockDirection::GetBlockSide(i);
-				if (mySide != side)
-				{
-					CalculateBoneWeightForBlock(bone.get(), bone->GetNeighbour(side), false);
-				}
-			}
-		}
+		for _, bone in ipairs(self.m_bones) do
+			local mySide = bone:GetBoneSide();
+			for i = 0, 5 do
+				local side = BlockDirection:GetBlockSide(i);
+				if mySide ~= side then
+					self:CalculateBoneWeightForBlock(bone, bone:GetNeighbour(side), false);
+				end
+			end
+		end 
 
-		// pass 3: from remaining blocks, calculate blocks which are connected to other binded blocks, but with different colors to those blocks.
-		for (auto& item : m_nodes)
-		{
-			CalculateBoneWeightFromNeighbours(item.second.get());
-		}--]]
+		for _, index in ipairs(self.m_nodeIndexes) do
+			local node = self.m_nodes[index];	
+			self:CalculateBoneWeightFromNeighbours(node);
+		end
 end
 
-function BMaxModel:CalculateBoneSkin(bone)
+function BMaxModel:CalculateBoneWeightForBlock(pBoneNode, node, bMustBeSameColor)
+	if node and not node:HasBoneWeight() then
+		if node.template_id ~= BMaxModel.BoneBlockId then
+			if (not bMustBeSameColor) or node:GetColor() == pBoneNode:GetColor() then
+				node:SetBoneIndex(pBoneNode:GetBoneIndex());
+				for i = 0, 5 do
+					self:CalculateBoneWeightForBlock(pBoneNode, node:GetNeighbour(i), bMustBeSameColor);
+				end
+			end
+		end
+	end
+end
+
+function BMaxModel:CalculateBoneWeightFromNeighbours(node)
+
+	if node and not node:HasBoneWeight() then
+		local bFoundBone = false;
+		for i = 0, 5 do
+			if not bFoundBone then
+				local side = BlockDirection:GetBlockSide(i);
+				local pNeighbourNode = node:GetNeighbour(side);
+			
+				if pNeighbourNode and pNeighbourNode:HasBoneWeight() then
+					--print("node", node.x, node.y, node.z, pNeighbourNode.x, pNeighbourNode.y, pNeighbourNode.z, pNeighbourNode:GetBoneIndex(), i);
+					node:SetBoneIndex(pNeighbourNode:GetBoneIndex());
+					bFoundBone = true;
+				end
+			end
+			
+		end
+
+		if (bFoundBone) then
+			for i = 0, 5 do
+				local side = BlockDirection:GetBlockSide(i);
+				local pNeighbourNode = node:GetNeighbour(side);
+			
+				if pNeighbourNode and not pNeighbourNode:HasBoneWeight() then
+					self:CalculateBoneWeightFromNeighbours(pNeighbourNode);
+				end
+			end
+		end
+			
+	end
+end
+
+function BMaxModel:CalculateBoneSkin(pBoneNode)
+	if pBoneNode:HasBoneWeight() then
+		return;
+	end
 	
+	local pParentBoneNode = pBoneNode:GetParent();
+	if pParentBoneNode and not pParentBoneNode:HasBoneWeight() then
+		self:CalculateBoneSkin(pParentBoneNode);
+	end
+
+	pBoneNode:SetBoneIndex(pBoneNode:GetBoneIndex());
+
+	local bone_color = pBoneNode:GetColor();
+
+	local mySide = pBoneNode:GetBoneSide();
+	for i = 0, 5 do
+		local side = BlockDirection:GetBlockSide(i);
+		if mySide ~= side then
+			self:CalculateBoneWeightForBlock(pBoneNode, pBoneNode:GetNeighbour(side), true);
+		end
+	end
 end
 
 function BMaxModel:AddBoneAnimation(startTime, endTime, moveSpeed, anim_data, animId)
@@ -494,7 +567,7 @@ function BMaxModel:AddBoneAnimation(startTime, endTime, moveSpeed, anim_data, an
 						if block then
 							for k , v in ipairs(data) do
 								if time[k] and data[k] then
-									block:AddKey(data[k]);
+									block:AddKey(data[k])
 									block:AddTime(time[k] + startTime);
 								end
 							end
@@ -517,6 +590,7 @@ function BMaxModel:AddBoneAnimation(startTime, endTime, moveSpeed, anim_data, an
 		scaleBlock:AddRange();
 	end
 end
+
 function BMaxModel:GetBone(bone_name)
 	for _, bone in ipairs(self.m_bones) do
 		if string.find(bone_name, bone.bone_name) == 1 then
@@ -540,9 +614,10 @@ end
 function BMaxModel:CreateDefaultAnimation()
 	if #self.m_bones == 0 then
 		self:CreateRootBone();
+		self:AddIdleAnimation();
 	end
 	
-	self:AddIdleAnimation();
+	
 end
 
 function BMaxModel:CreateRootBone()

@@ -29,6 +29,5 @@ function AnimationBlock:AddRange()
 		currentRange = self.ranges[self.nRanges][2] + 1;
 	end
 	table.insert(self.ranges, {currentRange, self.nTimes - 1});
-	print("range", currentRange, self.nTimes - 1);
 	self.nRanges = self.nRanges + 1;
 end

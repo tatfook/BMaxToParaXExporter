@@ -39,8 +39,8 @@ end
 
 function ParaXExporter:init()
 	LOG.std(nil, "info", "ParaXExporter", "plugin initialized");
-	--self:RegisterExporter();
-	--self:RegisterCommand();
+	self:RegisterExporter();
+	self:RegisterCommand();
 end
 
 function ParaXExporter:OnLogin()
@@ -48,9 +48,6 @@ end
 -- called when a new world is loaded. 
 
 function ParaXExporter:OnWorldLoad()
-	NPL.load("(gl)Mod/ParaXExporter/test/testParaXExporter.lua");
-	local testParaXExporter = commonlib.gettable("tests.testParaXExporter");
-	testParaXExporter:testStatic();
 end
 -- called when a world is unloaded. 
 
@@ -95,14 +92,12 @@ function ParaXExporter:RegisterCommand()
 		name="paraxexporter", 
 		quick_ref="/paraxexporter [filename]", 
 		desc=[[export a bmax file or current selection to paraX file
-@param -native: use C++ exporter, instead of NPL.
-/paraxexporter test.x			export current selection to test.stl file
-/paraxexporter -b test.bmax		convert test.bmax file to test.stl file
+/paraxexporter test.x			export current selection to test.x file
 ]], 
 		handler = function(cmd_name, cmd_text, cmd_params, fromEntity)
 			local file_name;
 			file_name,cmd_text = CmdParser.ParseString(cmd_text);
-			self:Export(file_name, "output.x");
+			self:Export(file_name);
 		end,
 	};
 end
@@ -110,14 +105,7 @@ end
 -- @param input_file: *.bmax file name
 -- @param output_file: *.x fileame
 function ParaXExporter:ConvertFromBMaxToParaX(input_file, output_file)
-	local model = BMaxModel:new();
-	local writer = ParaXWriter:new();
-
-	model:Load(input_file);
-	if model then 
-		writer:LoadModel(model.actor_model);
-		writer:SaveAsBinary(output_file);
-	end
+	self:Export(input_file, output_file);
 end
 
 -- @param input_file_name: file name. if it is *.bmax, we will convert this file and save output to *.x file.
@@ -125,8 +113,7 @@ end
 -- @param output_file_name: this should be nil, unless you explicitly specify an output name.
 -- @param -native: use C++ exporter, instead of NPL.
 function ParaXExporter:Export(input_file_name, output_file_name)
-	--[[input_file_name = input_file_name or "default.x";
-	pri
+
 	local name, extension = string.match(input_file_name,"(.+)%.(%w+)$");
 
 	if(not output_file_name)then
@@ -138,26 +125,43 @@ function ParaXExporter:Export(input_file_name, output_file_name)
 			output_file_name = input_file_name..".x";
 		end
 	end
-	LOG.std(nil, "info", "ParaxExporter", "exporting from %s to %s", input_file_name, output_file_name);
-	
-	local res;
-		
-		--NPL.load("(gl)Mod/ParaXExporter/BMaxModel.lua");
-		--local BMaxModel = commonlib.gettable("Mod.ParaXExporter.BMaxModel");
 
-		--[[local model = BMaxModel:new();
-		print (model)
+	LOG.std(nil, "info", "ParaXExporter", "exporting from %s to %s", input_file_name, output_file_name);
+	local model = BMaxModel:new();
+	local isValid = true;
+	if(extension == "bmax") then
+		if ParaIO.DoesFileExist(input_file_name) then
+			model:Load(input_file_name);
+		else 
+			isValid = false;
+		end
+	else
 		local blocks = Game.SelectionManager:GetSelectedBlocks();
-			if(blocks) then
-				model:LoadFromBlocks(blocks);
-			end]]
-		--local blocks = Game.SelectionManager:GetSelectedBlocks();
-	--[[print("123123");
-	local input_file = GameLogic.GetWorldDirectory()..input_file_name;
-	local output_file = GameLogic.GetWorldDirectory()..output_file_name;
-	self:ConvertFromBMaxToParaX(input_file, output_file)--]]
+		if(blocks) then
+			model:LoadFromBlocks(blocks);
+		end
+	end
 
+	if isValid then
+		local writer = ParaXWriter:new();
+
+		if model.m_modelType == BMaxModel.ModelTypeBlockModel then
+			writer:LoadModel(model);
+		elseif model.m_modelType == BMaxModel.ModelTypeMovieModel then
+			writer:LoadModel(model.actor_model);
+		end
+
+		local res = writer:SaveAsBinary(output_file_name);
+		if res then 
+			_guihelper.MessageBox(format("Successfully saved ParaX file to :%s, do you want to open it?", commonlib.Encoding.DefaultToUtf8(output_file_name)), function(res)
+				if(res and res == _guihelper.DialogResult.Yes) then
+					ParaGlobal.ShellExecute("open", ParaIO.GetCurDirectory(0)..output_file_name, "", "", 1);
+				end
+			end, _guihelper.MessageBoxButtons.YesNo);
+		end
+	else 
+		LOG.std(nil, "info", "ParaXExporter", "no valid input");
+	end
 	
-
 end
 

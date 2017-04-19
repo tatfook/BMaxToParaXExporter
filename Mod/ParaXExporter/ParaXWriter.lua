@@ -44,8 +44,10 @@ function ParaXWriter:SaveAsBinary(output_file_name)
 		self:WriteBody();
 		self:WriteXDWordArray();
 		LOG.std(nil, "info", "ParaXWriter", "file written to %s with %d bytes", output_file_name, self.data_length);
+		self.file:close();
+		return true;
 	end
-	self.file:close();
+	
 end
 
 function ParaXWriter:LoadModel(bmaxModel)
@@ -96,7 +98,12 @@ function ParaXWriter:WriteHeader()
 	self.file:WriteInt(4);
 
 	-- isAnimated 5: not understand(AnimationBitwise;# boolean animBones,animTextures)
-	self.file:WriteInt(5);
+	if #self.model.m_bones > 0 then
+		self.file:WriteInt(5);
+	else 
+		self.file:WriteInt(0);
+	end
+	
 
 	-- minExtent 3 float & maxExtent 3 float
 	self:WriteToken("<flt_list>");
@@ -384,7 +391,6 @@ end
 function ParaXWriter:WriteXBones()
 	local bones = self.model.m_bones;
 	local nbones = #bones;
-	print("bone_count", nbones);
 	self:WriteName("XBones");
 	self:WriteToken("{");
 	-- int list 
@@ -437,9 +443,7 @@ function ParaXWriter:WriteXAnimations()
 	self.file:WriteInt(animation_count);
 
 	for i, anim in ipairs(animations) do 
-		print("an", anim.animId);
 		self.file:WriteInt(anim.animId);
-		print("bn", anim.animId, anim.timeStart, anim.timeEnd);
 		self.file:WriteInt(anim.timeStart);
 		self.file:WriteInt(anim.timeEnd);
 		
@@ -530,12 +534,22 @@ function ParaXWriter:WriteRawData()
 
 	for _, frameNode in ipairs(bones) do
 		local bone = frameNode.bone;
+		self:InvertRotData(bone)
 		self:WriteAnimationBlockRawData(bone.translation);
 		self:WriteAnimationBlockRawData(bone.rotation);
 		self:WriteAnimationBlockRawData(bone.scaling);
 	end
 	
 	self:WriteToken("}");
+end
+
+function ParaXWriter:InvertRotData(bone)
+	local keys = bone.rotation.keys;
+	for _, key in ipairs(keys) do
+		key[1] = -key[1];
+		key[2] = -key[2];
+		key[3] = -key[3];
+	end
 end
 
 function ParaXWriter:WriteAnimationBlockRawData(animation_block)

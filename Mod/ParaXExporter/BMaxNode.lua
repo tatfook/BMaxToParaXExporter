@@ -30,16 +30,9 @@ local BMaxNode = commonlib.inherit(nil,commonlib.gettable("Mod.ParaXExporter.BMa
 function BMaxNode:ctor()
 	self.neighborBlocks = {};
 	self.m_color = 0;
-end
 
-function BMaxNode:init(model, x, y, z, template_id, block_data)
-	self.model = model;
-	self.x = x;
-	self.y = y;
-	self.z = z;
-	self.template_id = template_id;
-	self.block_data = block_data;
-	return self;
+	self.bone_index = -1;
+	self.block_model = nil;
 end
 
 function BMaxNode:init(model, x, y, z, template_id, block_data, block_content)
@@ -104,11 +97,17 @@ function BMaxNode:TessellateBlock()
 		end
 	end
 
-	return cube;
+	if(cube:GetVerticesCount() > 0)then
+		self.block_model = cube;
+	end
 end
 
-function BMaxNode:SetBoneIndex(bone_index)
-	
+function BMaxNode:GetCube()
+	if self.block_model then
+		return self.block_model;
+	end
+
+	return nil;
 end
 
 function BMaxNode:CalculateCubeAO(neighborBlocks)
