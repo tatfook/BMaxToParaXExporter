@@ -1,0 +1,4 @@
+{
+	searchpath = true,
+	main = "Mod/ParaXExporter/package_init.lua",
+}
