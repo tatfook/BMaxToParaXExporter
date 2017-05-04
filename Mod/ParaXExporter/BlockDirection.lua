@@ -58,3 +58,15 @@ end
 function BlockDirection:IsGroundSide(side)
 	return side ~= BlockDirection.top and side ~= BlockDirection.bottom;
 end
+
+function BlockDirection:Rotate90DegreeCW(side)
+	if side == BlockDirection.left then 
+		return BlockDirection.top;
+	elseif side == BlockDirection.right then
+		return BlockDirection.bottom;
+	elseif side == BlockDirection.top then
+		return BlockDirection.right;
+	elseif side == BlockDirection.bottom then
+		return BlockDirection.left;
+	end
+end

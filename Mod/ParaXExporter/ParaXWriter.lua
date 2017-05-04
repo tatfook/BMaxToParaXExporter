@@ -98,7 +98,7 @@ function ParaXWriter:WriteHeader()
 	self.file:WriteInt(4);
 
 	-- isAnimated 5: not understand(AnimationBitwise;# boolean animBones,animTextures)
-	if #self.model.m_bones > 0 then
+	if self.model.bHasBoneBlock then
 		self.file:WriteInt(5);
 	else 
 		self.file:WriteInt(0);
@@ -508,6 +508,7 @@ function ParaXWriter:WriteRawData()
 		self.file:WriteFloat(pos[2]);
 		self.file:WriteFloat(pos[3]);
 
+		--print("12");
 		self.file:WriteBytes(4, vertice.weights);
 		self.file:WriteBytes(4, vertice.bones);
 
@@ -530,6 +531,7 @@ function ParaXWriter:WriteRawData()
 		self.file:WriteShort(indice);
 	end 
 
+	print("12");
 	local bones = self.model.m_bones;
 
 	for _, frameNode in ipairs(bones) do

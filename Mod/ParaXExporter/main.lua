@@ -10,7 +10,6 @@ local ParaXExporter = commonlib.gettable("Mod.ParaXExporter");
 ParaXExporter:ConvertFromBMaxToParaX("Mod/ParaXExporter/test/input.bmax", "temp/output.x");
 ------------------------------------------------------------
 ]]
-NPL.load("(gl)Mod/ParaXExporter/BMaxParser.lua");
 NPL.load("(gl)Mod/ParaXExporter/BMaxModel.lua");
 NPL.load("(gl)Mod/ParaXExporter/ParaXWriter.lua");
 		
@@ -48,6 +47,7 @@ end
 -- called when a new world is loaded. 
 
 function ParaXExporter:OnWorldLoad()
+	--self:Export("Mod/ParaXExporter/test/1.bmax", "temp/output.x");
 end
 -- called when a world is unloaded. 
 

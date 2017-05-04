@@ -1,7 +1,7 @@
 local AnimationBlock = commonlib.inherit(nil, commonlib.gettable("Mod.ParaXExporter.Model.AnimationBlock"));
 
 function AnimationBlock:ctor()
-	self.type = 1;
+	self.type = 0;
 	self.seq = -1;
 	self.nRanges = 0;
 	self.nTimes = 0;
@@ -14,6 +14,7 @@ end
 
 
 function AnimationBlock:AddKey(key)
+	self.type = 1;
 	table.insert(self.keys, key);
 	self.nKeys = self.nKeys + 1;
 end

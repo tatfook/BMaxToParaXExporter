@@ -1,4 +1,4 @@
-﻿--[[
+﻿ --[[
 Title: block model
 Author(s): LiXizhi
 Date: 2015/12/4
@@ -15,6 +15,11 @@ local vector3d = commonlib.gettable("mathlib.vector3d");
 local BlockModel = commonlib.inherit(nil,commonlib.gettable("Mod.ParaXExporter.BlockModel"));
 local bor = mathlib.bit.bor;
 local band = mathlib.bit.band;
+
+BlockModel.FaceInvisiable = 0;
+BlockModel.FaceVisiableNotSign = 1;
+BlockModel.FaceVisiableSigned = 2;
+
 
 BlockModel.evf_none = 0;
 BlockModel.evf_topFront = 0x001;
@@ -68,6 +73,7 @@ BlockModel.CubeAmbientMaskMap = {
 
 function BlockModel:ctor()
 	self.m_vertices = {};
+	self.faces = {};
 	self.m_nFaceCount = 0;
 end
 
@@ -76,6 +82,17 @@ function BlockModel:InitCube()
 	self:MakeCube();
 	return self;
 end
+
+function BlockModel:InitFace()
+	for i = 1, 6 do
+		table.insert(self.faces, BlockModel.FaceInvisiable);
+	end
+end
+
+function BlockModel:GetFace(index)
+	return self.faces[index];
+end
+
 
 -- make this block model as a cube 
 function BlockModel:MakeCube()
@@ -165,6 +182,18 @@ function BlockModel:AddVertex(from_block, nVertexIndex)
 	table.insert(self.m_vertices, from_block.m_vertices[nVertexIndex+1]);
 	return #self.m_vertices - 1;
 end
+
+function BlockModel:SetFaceVisiable(index)
+	self.faces[index + 1] = BlockModel.FaceVisiableNotSign;
+end
+
+function BlockModel:SetFaceUsed(index)
+	self.faces[index + 1] = BlockModel.FaceVisiableSigned;
+end
+
+function BlockModel:IsFaceNotUse(index)
+	return self.faces[index + 1] == BlockModel.FaceVisiableNotSign;
+end	
 
 function BlockModel:AddFace(from_block, nFaceIndex)
 	local nFirstVertex = nFaceIndex * 4;

@@ -31,7 +31,7 @@ function BMaxNode:ctor()
 	self.neighborBlocks = {};
 	self.m_color = 0;
 
-	self.bone_index = -1;
+	self.bone_index = 0;
 	self.block_model = nil;
 end
 
@@ -54,6 +54,13 @@ function BMaxNode:GetNeighbour(side)
 	return self.model:GetNode(nX, nY, nZ);
 end
 
+function BMaxNode:GetNeighbourByOffset(offset)
+	local nX = self.x + offset[1];
+	local nY = self.y + offset[2];
+	local nZ = self.z + offset[3];
+	return self.model:GetNode(nX, nY, nZ);
+end
+
 function BMaxNode:TessellateBlock()
 
 	local cube = BlockModel:new();
@@ -62,23 +69,23 @@ function BMaxNode:TessellateBlock()
 	neighborBlocks[BlockCommon.rbp_center] = self;
 
 	self:QueryNeighborBlockData(neighborBlocks, 1, nNearbyBlockCount - 1);
-	local temp_cube = BlockModel:new():InitCube();
+	local cube = BlockModel:new():InitCube();
 	local dx = self.x - self.model.m_centerPos[1];
 	local dy = self.y - self.model.m_centerPos[2];
 	local dz = self.z - self.model.m_centerPos[3];
-	temp_cube:OffsetPosition(dx,dy,dz);
+	cube:OffsetPosition(dx,dy,dz);
 
 	local aoFlags = self:CalculateCubeAO(neighborBlocks);
 
 	local color = self:GetColor();
 	for face = 0, 5 do
+		
 		local pCurBlock = neighborBlocks[BlockCommon.RBP_SixNeighbors[face]];
-		if(not pCurBlock)then
-			local nFirstVertex = face * 4;
+		if(not pCurBlock or pCurBlock:GetBoneIndex() ~= self.bone_index) then
 			for v = 0, 3 do
+				local nFirstVertex = face * 4;
 				local i = nFirstVertex + v;
-				local nIndex = cube:AddVertex(temp_cube, i);
-
+				--local nIndex = cube:AddVertex(temp_cube, i);
 				local nShadowLevel = 0;
 				if (aoFlags > 0) then
 					nShadowLevel = cube:CalculateCubeVertexAOShadowLevel(i, aoFlags);
@@ -88,12 +95,13 @@ function BMaxNode:TessellateBlock()
 					r = math.floor(fShadow * r);
 					g = math.floor(fShadow * g);
 					b = math.floor(fShadow * b);
-					cube:SetVertexColor(nIndex, Color.RGBA_TO_DWORD(r, g, b));
+					cube:SetVertexColor(i, Color.RGBA_TO_DWORD(r, g, b));
 				else 
-					cube:SetVertexColor(nIndex, color);
+					cube:SetVertexColor(i, color);
 				end
-
 			end
+
+			cube:SetFaceVisiable(face);
 		end
 	end
 
@@ -234,6 +242,8 @@ end
 function BMaxNode:GetColor()
 	if (self.block_data) then
 		return Color.convert16_32(self.block_data);
+	else 
+		return Color.RGBA_TO_DWORD(0, 0, 0, 1);
 	end
 end
 

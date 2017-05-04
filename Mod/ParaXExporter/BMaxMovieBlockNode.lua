@@ -119,6 +119,9 @@ function BMaxMovieBlockNode:ParseMoveSpeed()
 		end
 	end
 
+	if self.animId == 4 or self.animId == 5 then
+		return 4;
+	end
 	return 0;
 end
 

@@ -26,6 +26,7 @@ NPL.load("(gl)Mod/ParaXExporter/Model/ModelRenderPass.lua");
 NPL.load("(gl)Mod/ParaXExporter/Model/ModelAnimation.lua");
 NPL.load("(gl)Mod/ParaXExporter/Model/ModelBone.lua");
 NPL.load("(gl)Mod/ParaXExporter/Common.lua");
+NPL.load("(gl)Mod/ParaXExporter/Rectangle.lua");
 NPL.load("(gl)script/ide/math/Quaternion.lua");
 NPL.load("(gl)script/ide/math/BlockDirection.lua");
 
@@ -46,7 +47,8 @@ local BMaxMovieBlockNode = commonlib.gettable("Mod.ParaXExporter.BMaxMovieBlockN
 local BMaxBlockSignNode = commonlib.gettable("Mod.ParaXExporter.BMaxBlockSignNode");
 local ShapeAABB = commonlib.gettable("mathlib.ShapeAABB");
 local lshift = mathlib.bit.lshift;
-local Common = commonlib.gettable("Mod.ParaXExporter.Common")
+local Common = commonlib.gettable("Mod.ParaXExporter.Common");
+local Rectangle = commonlib.gettable("Mod.ParaXExporter.Rectangle")
 
 local BMaxModel = commonlib.inherit(nil,commonlib.gettable("Mod.ParaXExporter.BMaxModel"));
 
@@ -89,6 +91,8 @@ function BMaxModel:ctor()
 	self.m_minExtent = {0, 0, 0};
 	self.m_maxExtent = {0, 0, 0};
 	self.m_nodeIndexes = {};
+	self.m_rectangles = {};
+	self.bHasBoneBlock = false;
 end
 
 -- whether we will resize the model to self:GetMaxModelSize();
@@ -130,6 +134,7 @@ function BMaxModel:LoadFromBlocks(blocks)
 		if(self.m_bAutoScale)then
 			self:ScaleModels();
 		end
+		self:MergeCoplanerBlockFace();
 		self:FillVerticesAndIndices();
 		self:CreateDefaultAnimation();
 	end
@@ -164,14 +169,16 @@ function BMaxModel:InitFromBlocks(blocks)
 	end
 	local nodes = {};
 	local aabb = ShapeAABB:new();
-	local bHasBoneBlock = false;
 	for k,v in ipairs(blocks) do
 		local x = v[1];
 		local y = v[2];
 		local z = v[3];
 		local template_id = v[4];
 		local block_data = v[5];
-		local block_content = BlockEngine:GetBlockEntityData(v[1], v[2], v[3]);
+		local block_content = v[6];
+		if not block_content then
+			block_content = BlockEngine:GetBlockEntityData(v[1], v[2], v[3]);
+		end
 		--Common:PrintTable(block_content);
 		aabb:Extend(x,y,z);
 		
@@ -184,7 +191,7 @@ function BMaxModel:InitFromBlocks(blocks)
 			local blockSignNode = BMaxBlockSignNode:new():init(self, x, y, z, template_id, block_data, block_content);
 			table.insert(nodes, blockSignNode);
 		elseif template_id == BMaxModel.BoneBlockId then
-			bHasBoneBlock = true;
+			self.bHasBoneBlock = true;
 
 			local nBoneIndex = #self.m_bones;
 			local frameNode = BMaxFrameNode:new():init(self, x, y, z, template_id, block_data, nBoneIndex);
@@ -228,7 +235,7 @@ function BMaxModel:InitFromBlocks(blocks)
 		print("fMaxLength", fMaxLength, blockMaxZ, blockMinZ);
 		self.m_fScale = self:CalculateScale(fMaxLength);
 		print("m_fScale", self.m_fScale);
-		if (bHasBoneBlock) then 
+		if (self.bHasBoneBlock) then 
 			self.m_fScale = self.m_fScale * 2;
 		end
 	end
@@ -355,6 +362,89 @@ function BMaxModel:GetTotalTriangleCount()
 	return cnt;
 end
 
+function BMaxModel:MergeCoplanerBlockFace()
+	for _, index in ipairs(self.m_nodeIndexes) do
+		local node = self.m_nodes[index];
+		local cube = node:GetCube();
+		
+		for i = 0, 5 do 
+			if cube:IsFaceNotUse(i) then
+				--print("node", node.x, node.y, node.z);
+				self:FindCoplanerFace(node, i);
+			end
+		end	
+	end
+
+	print("rect", #self.m_rectangles);
+end 
+
+function BMaxModel:FindCoplanerFace(node, faceIndex)
+	local nodes = {node, node, node, node};
+	local rectangle = Rectangle:new():init(nodes, faceIndex);
+	
+	if rectangle then 
+		for i = 0, 3 do
+			self:FindNeighbourFace(rectangle, i, faceIndex);
+			local cube = node:GetCube();
+			cube:SetFaceUsed(faceIndex);
+		end
+	end
+
+	table.insert(self.m_rectangles, rectangle);
+end 
+
+function BMaxModel:FindNeighbourFace(rectangle, i, faceIndex)
+	
+	local index = faceIndex * 4 + i;
+	local offset = Rectangle.DirectionOffsetTable[index];
+	local nextI;
+	if i == 3 then
+		nextI = index - 3;
+	else 
+		nextI = index + 1;
+	end
+	local fromNode, toNode = rectangle:GetNode(nextI);
+	--print("face", i, faceIndex, fromNode.x, fromNode.y, fromNode.z, toNode.x, toNode.y, toNode.z);
+	local nextOffset = Rectangle.DirectionOffsetTable[nextI]
+	local currentNode = fromNode;
+	local nodes = {};
+	if fromNode then
+		repeat 
+			local neighbourNode = currentNode:GetNeighbourByOffset(offset);
+			--print("neighbourNode", currentNode, neighbourNode);
+			if not neighbourNode or currentNode:GetColor() ~= neighbourNode:GetColor() or currentNode:GetBoneIndex() ~= neighbourNode:GetBoneIndex() then
+				return;
+			end
+			--print("index1", faceIndex, index, offset[1], offset[2], offset[3]);
+			local neighbourCube = neighbourNode:GetCube();
+			if not neighbourCube:IsFaceNotUse(faceIndex) then
+				return;
+			end 
+			--print("3");
+			table.insert(nodes, neighbourNode);
+
+			if currentNode == toNode then
+				break;
+			end
+			currentNode = currentNode:GetNeighbourByOffset(nextOffset);
+		until(currentNode == nil)
+
+		local newFromNode = fromNode:GetNeighbourByOffset(offset);
+		local newToNode = toNode:GetNeighbourByOffset(offset);
+		--[[print("node2s", #nodes);
+		print("newFrom", newFromNode.x, newFromNode.y, newFromNode.z);
+		print("toNode", newToNode.x, newToNode.y, newToNode.z);--]]
+		for _, node in ipairs(nodes) do
+			local cube = node:GetCube();
+			cube:SetFaceUsed(faceIndex);
+		end
+		rectangle:UpdateNode(newFromNode, newToNode, nextI);
+		self:FindNeighbourFace(rectangle, i, faceIndex);
+	end
+end
+
+
+
 function BMaxModel:FillVerticesAndIndices()	
 	local aabb = ShapeAABB:new();
 	local geoset = self:AddGeoset();
@@ -366,7 +456,59 @@ function BMaxModel:FillVerticesAndIndices()
 	local nStartVertex = 0;
 
 	--print("node", Common:PrintNode(self.m_nodes));
-	for _, index in ipairs(self.m_nodeIndexes) do
+	for _, rectangle in ipairs(self.m_rectangles) do
+		local nIndexCount =  6;
+		local nVertices = 4;
+		local vertices = rectangle:GetVertices();
+		
+
+		if nIndexCount + geoset:GetIndexCount() >= 0xffff then
+			nStartIndex = #self.m_indices;
+			geoset = self:AddGeoset();
+			pass = self:AddRenderPass();
+	
+			pass:SetGeoset(geoset.id);
+			pass:SetStartIndex(nStartIndex);
+			geoset:SetVertexStart(total_count);
+			nStartVertex = 0;
+		end
+
+		geoset.vstart = geoset.vstart + nVertices;
+		geoset.icount = geoset.icount+ nIndexCount;
+		pass.indexCount = pass.indexCount + nIndexCount;
+
+		local vertex_weight = 255;
+
+		local boneIndex = rectangle:GetBoneIndex();
+		for i, vertice in ipairs(vertices) do
+			--print("adv", vertice.position[1], vertice.position[2], vertice.position[3]);
+			local modelVertex = ModelVertice:new();
+			modelVertex.pos = vertice.position;
+			--print("pos", modelVertex.pos[1], modelVertex.pos[2], modelVertex.pos[3]);
+			modelVertex.normal = vertice.normal;
+			modelVertex.color0 = vertice.color2;
+			modelVertex.weights[1] = vertex_weight;
+			modelVertex.bones[1] = boneIndex;
+
+
+			table.insert(self.m_vertices, modelVertex);
+
+			aabb:Extend(modelVertex.pos);
+		end 
+
+		local start_index = nStartVertex;
+		table.insert(self.m_indices, start_index + 0);
+		table.insert(self.m_indices, start_index + 1);
+		table.insert(self.m_indices, start_index + 2);
+		table.insert(self.m_indices, start_index + 0);
+		table.insert(self.m_indices, start_index + 2);
+		table.insert(self.m_indices, start_index + 3);
+
+		total_count = total_count + nVertices;
+		nStartVertex = nStartVertex + nVertices;
+	end
+
+	--[[for _, index in ipairs(self.m_nodeIndexes) do
 		local node = self.m_nodes[index];
 		local cube = node:GetCube();
 		if cube then 
@@ -397,6 +539,7 @@ function BMaxModel:FillVerticesAndIndices()
 			for i, vertice in ipairs(vertices) do
 				local modelVertex = ModelVertice:new();
 				modelVertex.pos = vertice.position;
+				--print("pos", modelVertex.pos[1], modelVertex.pos[2], modelVertex.pos[3]);
 				modelVertex.normal = vertice.normal;
 				modelVertex.color0 = vertice.color2;
 				modelVertex.weights[1] = vertex_weight;
@@ -422,7 +565,7 @@ function BMaxModel:FillVerticesAndIndices()
 			nStartVertex = nStartVertex + nVertices;
 		end
 		
-	end
+	end--]]
 
 	self.m_minExtent = aabb:GetMin();
 	self.m_maxExtent = aabb:GetMax();
@@ -616,8 +759,6 @@ function BMaxModel:CreateDefaultAnimation()
 		self:CreateRootBone();
 		self:AddIdleAnimation();
 	end
-	
-	
 end
 
 function BMaxModel:CreateRootBone()
@@ -627,7 +768,7 @@ end
 function BMaxModel:AddIdleAnimation()
 	local anim = ModelAnimation:new();
 	anim.timeStart = 0;
-	anim.timeEnd = 30000;
+	anim.timeEnd = 0;
 	anim.animID = 0;
 	anim.moveSpeed = 0;
 	table.insert(self.m_animations, anim);
