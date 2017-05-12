@@ -99,7 +99,7 @@ function ParaXWriter:WriteHeader()
 
 	-- isAnimated 5: not understand(AnimationBitwise;# boolean animBones,animTextures)
 	if self.model.bHasBoneBlock then
-		self.file:WriteInt(0);
+		self.file:WriteInt(5);
 	else 
 		self.file:WriteInt(0);
 	end

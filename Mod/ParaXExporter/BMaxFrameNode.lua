@@ -144,7 +144,7 @@ function BMaxFrameNode:AutoSetBoneName()
 			end
 		end
 		self.bone_name = bone_name;
-		--print("bone_name",  self.bone_name);
+		--print("bone_name",  self.bone_name, nParentCount);
 	end
 end
 

@@ -191,10 +191,22 @@ function BMaxModel:InitFromBlocks(blocks)
 			local blockSignNode = BMaxBlockSignNode:new():init(self, x, y, z, template_id, block_data, block_content);
 			table.insert(nodes, blockSignNode);
 		elseif template_id == BMaxModel.BoneBlockId then
-			
+			self.bHasBoneBlock = true;
 
 			local nBoneIndex = #self.m_bones;
 			local frameNode = BMaxFrameNode:new():init(self, x, y, z, template_id, block_data, nBoneIndex);
+			
+			local bone = frameNode.bone;
+			local tranBlock = bone.translation;
+			local rotBlock =  bone.rotation;
+			local scaleBlock = bone.scaling;
+			tranBlock:AddKey({0, 0, 0});
+			tranBlock:AddTime(0);
+			rotBlock:AddKey(Quaternion:new():FromAngleAxis(0, frameNode:GetAxis()));
+			rotBlock:AddTime(0);
+			scaleBlock:AddKey({1, 1, 1});
+			scaleBlock:AddTime(0);
+
 			table.insert(nodes, frameNode);
 			table.insert(self.m_bones, frameNode);
 		else 
@@ -477,7 +489,7 @@ function BMaxModel:FillVerticesAndIndices()
 		geoset.icount = geoset.icount+ nIndexCount;
 		pass.indexCount = pass.indexCount + nIndexCount;
 
-		local vertex_weight = 0;
+		local vertex_weight = 255;
 
 		for i, vertice in ipairs(vertices) do
 			--print("adv", vertice.position[1], vertice.position[2], vertice.position[3]);
