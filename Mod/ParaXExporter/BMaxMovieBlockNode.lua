@@ -1,10 +1,16 @@
 NPL.load("(gl)Mod/ParaXExporter/BlockDirection.lua");
 NPL.load("(gl)Mod/ParaXExporter/BMaxModel.lua");
+NPL.load("(gl)Mod/ParaXExporter/Common.lua");
 
+
+
+local Common = commonlib.gettable("Mod.ParaXExporter.Common");
 local BMaxMovieBlockNode = commonlib.inherit(commonlib.gettable("Mod.ParaXExporter.BMaxNode") ,commonlib.gettable("Mod.ParaXExporter.BMaxMovieBlockNode"));
 
 local BlockDirection = commonlib.gettable("Mod.ParaXExporter.BlockDirection");
 local BMaxModel = commonlib.gettable("Mod.ParaXExporter.BMaxModel");
+
+BMaxMovieBlockNode.DefaultSpeed = 4;
 
 function BMaxMovieBlockNode:ctor()
 	self.animId = 4;
@@ -70,8 +76,12 @@ end
 function BMaxMovieBlockNode:ParseAnimId(blockSign)
 	local signTitle = blockSign:GetSignTitle();
 	if signTitle then
-		local animId, name = string.match(signTitle, "(%d+) (%w+)$"); 
-		self.animId = tonumber(animId);
+		local animIdStr, name = string.match(signTitle[1], "(%d+) (%w+)$"); 
+		print("animId", animId, signTitle[1]);
+		local animId = tonumber(animId);
+		if animId then
+			self.animId = animId;
+		end
 	end
 	
 end
@@ -115,7 +125,13 @@ function BMaxMovieBlockNode:ParseMoveSpeed()
 		if timeseries then
 			local speedScaleTable = timeseries.speedscale;
 			local speed = speedScaleTable.data;
-			return speed[1];
+			Common:PrintTable(speed);
+			print("speed");
+			if speed[1] then
+				return tonumber(speed[1])
+			else 
+				return BMaxMovieBlockNode.DefaultSpeed;
+			end
 		end
 	end
 

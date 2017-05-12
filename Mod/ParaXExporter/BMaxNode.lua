@@ -17,6 +17,7 @@ NPL.load("(gl)Mod/ParaXExporter/Common.lua");
 NPL.load("(gl)script/ide/System/Core/Color.lua");
 NPL.load("(gl)Mod/ParaXExporter/BlockDirection.lua");
 
+local block_types = commonlib.gettable("MyCompany.Aries.Game.block_types")
 local BlockModel = commonlib.gettable("Mod.ParaXExporter.BlockModel");
 local BlockCommon = commonlib.gettable("Mod.ParaXExporter.BlockCommon");
 local Common = commonlib.gettable("Mod.ParaXExporter.Common")
@@ -31,7 +32,7 @@ function BMaxNode:ctor()
 	self.neighborBlocks = {};
 	self.m_color = 0;
 
-	self.bone_index = 0;
+	self.bone_index = -1;
 	self.block_model = nil;
 end
 
@@ -240,10 +241,16 @@ function BMaxNode:QueryNeighborBlockData(pBlockData,nFrom,nTo)
 end
 
 function BMaxNode:GetColor()
-	if (self.block_data) then
-		return Color.convert16_32(self.block_data);
+	if self.m_color ~= 0 then
+		return self.m_color;
+	end
+	if (self.block_data and self.block_data ~= 0) then
+		self.m_color = Color.convert16_32(self.block_data);
+		return self.m_color;
 	else 
-		return Color.RGBA_TO_DWORD(0, 0, 0, 1);
+		local block_template = block_types.get(self.template_id);
+		self.m_color = block_template:GetBlockColor(self.x, self.y, self.z);
+		return self.m_color;
 	end
 end
 

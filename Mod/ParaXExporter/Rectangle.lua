@@ -84,6 +84,6 @@ function Rectangle:GetVertices()
 	return retangleVertices;
 end
 
-function Rectangle:GetBoneIndex()
-	return self.nodes[1]:GetBoneIndex();
+function Rectangle:GetBoneIndex(index)
+	return self.nodes[index]:GetBoneIndex();
 end

@@ -191,7 +191,7 @@ function BMaxModel:InitFromBlocks(blocks)
 			local blockSignNode = BMaxBlockSignNode:new():init(self, x, y, z, template_id, block_data, block_content);
 			table.insert(nodes, blockSignNode);
 		elseif template_id == BMaxModel.BoneBlockId then
-			self.bHasBoneBlock = true;
+			
 
 			local nBoneIndex = #self.m_bones;
 			local frameNode = BMaxFrameNode:new():init(self, x, y, z, template_id, block_data, nBoneIndex);
@@ -477,9 +477,8 @@ function BMaxModel:FillVerticesAndIndices()
 		geoset.icount = geoset.icount+ nIndexCount;
 		pass.indexCount = pass.indexCount + nIndexCount;
 
-		local vertex_weight = 255;
+		local vertex_weight = 0;
 
-		local boneIndex = rectangle:GetBoneIndex();
 		for i, vertice in ipairs(vertices) do
 			--print("adv", vertice.position[1], vertice.position[2], vertice.position[3]);
 			local modelVertex = ModelVertice:new();
@@ -488,7 +487,7 @@ function BMaxModel:FillVerticesAndIndices()
 			modelVertex.normal = vertice.normal;
 			modelVertex.color0 = vertice.color2;
 			modelVertex.weights[1] = vertex_weight;
-			modelVertex.bones[1] = boneIndex;
+			modelVertex.bones[1] = rectangle:GetBoneIndex(i);
 
 
 			table.insert(self.m_vertices, modelVertex);
@@ -573,8 +572,10 @@ function BMaxModel:FillVerticesAndIndices()
 end	
 
 function BMaxModel:CalculateBoneWeights()
+
 		-- pass 1: calculate all blocks directly connected to bone block and share the same bone color
 		for _, bone in ipairs(self.m_bones) do
+			
 			self:CalculateBoneSkin(bone);
 
 		end
@@ -757,6 +758,9 @@ end
 function BMaxModel:CreateDefaultAnimation()
 	if #self.m_bones == 0 then
 		self:CreateRootBone();
+	end
+
+	if #self.m_animations == 0 then
 		self:AddIdleAnimation();
 	end
 end

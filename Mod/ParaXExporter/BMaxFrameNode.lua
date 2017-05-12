@@ -35,6 +35,7 @@ function BMaxFrameNode:init(model, x, y, z, template_id, block_data, bone_index)
 	self.template_id = template_id;
 	self.block_data = block_data;
 	self.n_index = bone_index;
+	self.bone_index = -1;
 	self.bone_name = nil;
 	self.m_children = {};
 
@@ -78,7 +79,7 @@ function BMaxFrameNode:GetColor()
 		local side = BlockDirection:GetBlockSide((myOpSide + i) % 6);
 		if side ~= mySide or pParentNode == nil then
 			local neighbourNode = self:GetNeighbour(side);
-			if neighbourNode and neighbourNode.template_id ~= BMaxModel.BoneBlockId then
+			if neighbourNode and not neighbourNode:HasBoneWeight() and neighbourNode.template_id ~= BMaxModel.BoneBlockId then
 				self.m_color = neighbourNode:GetColor();
 				return self.m_color;
 			end
@@ -143,7 +144,7 @@ function BMaxFrameNode:AutoSetBoneName()
 			end
 		end
 		self.bone_name = bone_name;
-		print("bone_name",  self.bone_name);
+		--print("bone_name",  self.bone_name);
 	end
 end
 
