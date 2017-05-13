@@ -338,6 +338,7 @@ function BMaxModel:ParseBlockFrames()
 
 	for _, bone in ipairs(self.m_bones) do
 		bone:AutoSetBoneName();
+		print("bone", bone:GetBoneIndex(), bone.bone.parent);
 	end
 end
 

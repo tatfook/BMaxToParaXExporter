@@ -1,4 +1,4 @@
---[[
+﻿--[[
 Title: 
 Author(s):  
 Date: 
@@ -60,7 +60,9 @@ end
 -- add plugin integration points with the IDE
 function ParaXExporter:RegisterExporter()
 	GameLogic.GetFilters():add_filter("GetExporters", function(exporters)
-		exporters[#exporters+1] = {id="ParaX", title="ParaX exporter", desc="export ParaX files for 3d movie"}
+		local title = L"ParaX 动画模型导出";
+		local desc = L"将多个电影方块导出为 *.x 动画文件";
+		exporters[#exporters+1] = {id="ParaX", title=title, desc=desc}
 		return exporters;
 	end);
 
@@ -153,11 +155,13 @@ function ParaXExporter:Export(input_file_name, output_file_name)
 
 		local res = writer:SaveAsBinary(output_file_name);
 		if res then 
-			_guihelper.MessageBox(format("Successfully saved ParaX file to :%s, do you want to open it?", commonlib.Encoding.DefaultToUtf8(output_file_name)), function(res)
+			--[[_guihelper.MessageBox(format("Successfully saved ParaX file to :%s, do you want to open it?", commonlib.Encoding.DefaultToUtf8(output_file_name)), function(res)
 				if(res and res == _guihelper.DialogResult.Yes) then
 					ParaGlobal.ShellExecute("open", ParaIO.GetCurDirectory(0)..output_file_name, "", "", 1);
 				end
-			end, _guihelper.MessageBoxButtons.YesNo);
+			end, _guihelper.MessageBoxButtons.YesNo);--]]
+			LOG.std(nil, "info", "ParaXExporter", "successful save ParaX file");
+	
 		end
 	else 
 		LOG.std(nil, "info", "ParaXExporter", "no valid input");

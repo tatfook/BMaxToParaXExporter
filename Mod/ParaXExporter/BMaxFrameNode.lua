@@ -33,7 +33,7 @@ function BMaxFrameNode:init(model, x, y, z, template_id, block_data, bone_index)
 	self.y = y;
 	self.z = z;
 	self.template_id = template_id;
-	self.block_data = block_data;
+	self.block_data = block_data and block_data or 0;
 	self.n_index = bone_index;
 	self.bone_index = -1;
 	self.bone_name = nil;
@@ -167,18 +167,20 @@ function BMaxFrameNode:GetParentBone(bRefresh)
 		if dy ~= 0 then
 			maxBoneLength = self.model.MaxBoneLengthVertical;
 		end
-
+		--print("origin", self:GetBoneIndex(), self.block_data, offset.x, offset.y, offset.z);
 		for i = 1, maxBoneLength do
 			local x = cx + dx * i;
 			local y = cy + dy * i;
 			local z = cz + dz * i;
 
+			
 			local parent = self.model:GetFrameNode(x, y, z);
 			if (parent) then
 				local parentSide = BlockDirection:GetBlockSide(parent.block_data);
 				local opSide = BlockDirection:GetOpSide(parentSide);
 				if opSide ~= side or (dx + dy + dz) < 0 then
 					if not self:IsAncestorOf(parent_node) then
+						--print("current", i, parent:GetBoneIndex());
 						self:SetParentIndex(parent:GetIndex());
 						break;
 					end
