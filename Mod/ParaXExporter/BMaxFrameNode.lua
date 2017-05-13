@@ -180,6 +180,7 @@ function BMaxFrameNode:GetParentBone(bRefresh)
 				if opSide ~= side or (dx + dy + dz) < 0 then
 					if not self:IsAncestorOf(parent_node) then
 						self:SetParentIndex(parent:GetIndex());
+						break;
 					end
 				end
 			end
@@ -198,6 +199,8 @@ function BMaxFrameNode:SetParentIndex(index)
 	if (parent) then
 		parent:AddChild(self);
 		self.bone.parent = parent:GetBoneIndex();
+	else
+		self.bone.parent = -1;
 	end
 end
 
