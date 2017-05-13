@@ -42,6 +42,19 @@ function BMaxFrameNode:init(model, x, y, z, template_id, block_data, bone_index)
 
 	return self;
 end
+
+function BMaxFrameNode:GenerateStartFrame(startTime)
+	local bone = self.bone;
+	local tranBlock = bone.translation;
+	local rotBlock =  bone.rotation;
+	local scaleBlock = bone.scaling;
+	tranBlock:AddKey({0, 0, 0});
+	tranBlock:AddTime(startTime);
+	rotBlock:AddKey(Quaternion:new():FromAngleAxis(0, self:GetAxis()));
+	rotBlock:AddTime(startTime);
+	scaleBlock:AddKey({1, 1, 1});
+	scaleBlock:AddTime(startTime);
+end
 	
 function BMaxFrameNode:GetBone()
 	return self.bone;
@@ -104,6 +117,7 @@ function BMaxFrameNode:AutoSetBoneName()
 		while pChild do
 			local pParent = pChild:GetParent();
 			if (pParent and #pParent.m_children > 1) then
+				nMultiChildParentCount = nMultiChildParentCount + 1;
 				if pParent.z > pChild.z then
 					nSide = 1;
 				elseif pParent.z < pChild.z then
@@ -143,8 +157,14 @@ function BMaxFrameNode:AutoSetBoneName()
 				end	
 			end
 		end
+
+		local nCount = self.model:GetNameAppearanceCount(bone_name);
+		if (nCount > 0) then 
+			bone_name = bone_name.."_"..nCount;
+		end
+
 		self.bone_name = bone_name;
-		--print("bone_name",  self.bone_name, nParentCount);
+		--print("bone_name",  self.bone_name, self:GetBoneIndex());
 	end
 end
 

@@ -13,7 +13,6 @@ local BMaxModel = commonlib.gettable("Mod.ParaXExporter.BMaxModel");
 BMaxMovieBlockNode.DefaultSpeed = 4;
 
 function BMaxMovieBlockNode:ctor()
-	self.animId = 4;
 	self.movieLength = 30;
 
 	self.actor_table = nil;
@@ -23,6 +22,11 @@ function BMaxMovieBlockNode:ctor()
 	self.lastBlock = nil;
 	self.nextBlock = -1;
 	self.hasConnect = false;
+	self.blockSignNode = nil;
+
+	self.m_speeds = {};
+	self.m_animTimes = {};
+	self.m_animIds = {};
 end
 
 function BMaxMovieBlockNode:ConnectMovieBlock()
@@ -37,7 +41,7 @@ function BMaxMovieBlockNode:ConnectMovieBlock()
 				local side = BlockDirection:GetBlockSide(node.block_data)
 				self:ConnectNode(node, side);
 			elseif node.template_id == BMaxModel.BlockSignId then
-				self:ParseAnimId(node)
+				self.blockSignNode = node;
 			end
 		end
 	end
@@ -73,18 +77,7 @@ function BMaxMovieBlockNode:HasLastBlock()
 	return self.lastBlock ~= nil;
 end
 
-function BMaxMovieBlockNode:ParseAnimId(blockSign)
-	local signTitle = blockSign:GetSignTitle();
-	if signTitle then
-		local animIdStr, name = string.match(signTitle[1], "(%d+) (%w+)$"); 
-		print("animId", animId, signTitle[1]);
-		local animId = tonumber(animId);
-		if animId then
-			self.animId = animId;
-		end
-	end
-	
-end
+
 
 function BMaxMovieBlockNode:ParseMovieInfo()
 	local commandTable = commonlib.LoadTableFromString(self.block_content[1]);
@@ -111,6 +104,7 @@ function BMaxMovieBlockNode:ParseActor(name)
 					if asset_name == name then
 						self.actor_table = actor_table;
 						self.asset_file = asset_name;
+						self:ParseMovieDetail();
 						break;
 					end
 				end 
@@ -119,26 +113,67 @@ function BMaxMovieBlockNode:ParseActor(name)
 	end
 end
 
-function BMaxMovieBlockNode:ParseMoveSpeed()
+function BMaxMovieBlockNode:ParseMovieDetail()
 	if self.actor_table then 
 		local timeseries = self.actor_table.timeseries;
 		if timeseries then
-			local speedScaleTable = timeseries.speedscale;
-			local speed = speedScaleTable.data;
-			Common:PrintTable(speed);
-			print("speed");
-			if speed[1] then
-				return tonumber(speed[1])
-			else 
-				return BMaxMovieBlockNode.DefaultSpeed;
-			end
+			self:ParseAnimId(timeseries);
+			self:ParseSpeed(timeseries);
 		end
 	end
 
-	if self.animId == 4 or self.animId == 5 then
-		return 4;
-	end
+	
 	return 0;
+end
+
+function BMaxMovieBlockNode:ParseSpeed(timeseries)
+	local speedScaleTable = timeseries.speedscale;
+	local speedData = speedScaleTable.data;
+	if #speedData > 0 then
+		for _, spped in ipairs(speedData) do
+			table.insert(self.m_speeds, speed)
+		end
+	else 
+		for _, animId in ipairs(self.m_animIds) do
+			print("aa", animId);
+			if self.animId == 4 or self.animId == 5 then
+				table.insert(self.m_speeds, BMaxMovieBlockNode.DefaultSpeed);
+				return;
+			end
+		end
+
+		table.insert(self.m_speeds, 0);
+	end		
+end
+
+function BMaxMovieBlockNode:ParseAnimId(timeseries)
+
+	local signTitle = self.blockSignNode:GetSignTitle();
+	
+	local animTable = timeseries.anim;
+	local animData = animTable.data;
+	local animTimeData = animTable.times;
+	if #animData > 0 and #animTimeData > 0 then
+		for _, animId in ipairs(animData) do
+			table.insert(self.m_animIds, animId)
+		end
+
+		for _, animTime in ipairs(animTimeData) do
+			table.insert(self.m_animTimes, animTime)
+		end
+
+	elseif signTitle then
+		local animIdStr, name = string.match(signTitle[1], "(%d+) (%w+)$"); 
+		local animId = tonumber(animId);
+		if animId then
+			table.insert(self.m_animIds, animId);
+			table.insert(self.m_animTimes, 0);
+		end
+	else 
+		table.insert(self.m_animIds, 0);
+		table.insert(self.m_animTimes, 0);
+	end
+
 end
 
 function BMaxMovieBlockNode:GetAssetName(actor_table)

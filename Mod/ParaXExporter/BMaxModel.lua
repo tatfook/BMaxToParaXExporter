@@ -92,6 +92,7 @@ function BMaxModel:ctor()
 	self.m_maxExtent = {0, 0, 0};
 	self.m_nodeIndexes = {};
 	self.m_rectangles = {};
+	self.m_name_occurances = {};
 	self.bHasBoneBlock = false;
 end
 
@@ -195,17 +196,7 @@ function BMaxModel:InitFromBlocks(blocks)
 
 			local nBoneIndex = #self.m_bones;
 			local frameNode = BMaxFrameNode:new():init(self, x, y, z, template_id, block_data, nBoneIndex);
-			
-			local bone = frameNode.bone;
-			local tranBlock = bone.translation;
-			local rotBlock =  bone.rotation;
-			local scaleBlock = bone.scaling;
-			tranBlock:AddKey({0, 0, 0});
-			tranBlock:AddTime(0);
-			rotBlock:AddKey(Quaternion:new():FromAngleAxis(0, frameNode:GetAxis()));
-			rotBlock:AddTime(0);
-			scaleBlock:AddKey({1, 1, 1});
-			scaleBlock:AddTime(0);
+			frameNode:GenerateStartFrame(0);
 
 			table.insert(nodes, frameNode);
 			table.insert(self.m_bones, frameNode);
@@ -309,18 +300,29 @@ function BMaxModel:ParseMovieBlocks()
 
 	-- parse animation 
 	local startTime = 0;
-	self.actor_model:AddBoneAnimation(startTime, firstBlock.movieLength, 0, nil, 0);
+	--self.actor_model:AddModelAnimation(startTime, firstBlock.movieLength, 0, 0);
+	self.actor_model:AddBoneAnimation(startTime, nil);
 	startTime = startTime + firstBlock.movieLength + BMaxModel.MovieBlockInterval;
 	local next = firstBlock.nextBlock;
 
 	while next ~= -1 do
 		local currentBlock = self.m_nodes[next];
 		currentBlock:ParseActor(assetName);
+
 		local bone_anim = currentBlock:GetAnimData();
-		local moveSpeed = currentBlock:ParseMoveSpeed();
 		local endTime = startTime + currentBlock.movieLength;
+
+		for i, animId in ipairs(currentBlock.m_animIds) do
+			local animTime = currentBlock.m_animTimes[i];
+			local speed = currentBlock.m_speeds[i];
+			animTime = animTime and animTime or currentBlock.m_animTimes[1];
+			speed = speed and speed or currentBlock.m_speed[1];
+			print("anim", animTime, speed, animId);
+			self.actor_model:AddModelAnimation(startTime + animTime, endTime, 4, animId);
+		end
+
 		if bone_anim then 
-			self.actor_model:AddBoneAnimation(startTime, endTime, moveSpeed, bone_anim, currentBlock.animId);
+			self.actor_model:AddBoneAnimation(startTime, bone_anim);
 		end
 		startTime = startTime + currentBlock.movieLength + BMaxModel.MovieBlockInterval;
 		next = currentBlock.nextBlock;
@@ -338,7 +340,6 @@ function BMaxModel:ParseBlockFrames()
 
 	for _, bone in ipairs(self.m_bones) do
 		bone:AutoSetBoneName();
-		print("bone", bone:GetBoneIndex(), bone.bone.parent);
 	end
 end
 
@@ -677,27 +678,21 @@ function BMaxModel:CalculateBoneSkin(pBoneNode)
 	end
 end
 
-function BMaxModel:AddBoneAnimation(startTime, endTime, moveSpeed, anim_data, animId)
+function BMaxModel:AddModelAnimation(startTime, endTime, moveSpeed, animId)
 	local anim = ModelAnimation:new();
 	anim.timeStart = startTime;
 	anim.timeEnd = endTime;
 	anim.animId = animId;
 	anim.moveSpeed = moveSpeed;
 	table.insert(self.m_animations, anim);
+end
 
-	for _, frameNode in ipairs(self.m_bones) do
-		local bone = frameNode.bone;
-
-		local tranBlock = bone.translation;
-		local rotBlock =  bone.rotation;
-		local scaleBlock = bone.scaling;
-		
-		tranBlock:AddKey({0, 0, 0});
-		tranBlock:AddTime(startTime);
-		rotBlock:AddKey(Quaternion:new():FromAngleAxis(0, frameNode:GetAxis()));
-		rotBlock:AddTime(startTime);
-		scaleBlock:AddKey({1, 1, 1});
-		scaleBlock:AddTime(startTime);
+function BMaxModel:AddBoneAnimation(startTime, anim_data)
+	
+	if startTime ~= 0 then 
+		for _, frameNode in ipairs(self.m_bones) do
+			frameNode:GenerateStartFrame(startTime);
+		end
 	end
 
 	if anim_data then 
@@ -750,9 +745,16 @@ end
 
 function BMaxModel:GetBone(bone_name)
 	for _, bone in ipairs(self.m_bones) do
-		if string.find(bone_name, bone.bone_name) == 1 then
-			local anim = string.gsub(bone_name, bone.bone_name.."_", ""); 
-			return bone, anim;
+		local tranName = bone.bone_name.."_".."trans";
+		local rotName = bone.bone_name.."_".."rot";
+		local scaleName = bone.bone_name.."_".."scale";
+		local anim;
+		if bone_name == tranName then
+			return bone, "tran";
+		elseif bone_name == rotName then
+			return bone, "rot";
+		elseif bone_name == scaleName then
+			return bone, "scale";
 		end
 	end
 
@@ -832,4 +834,19 @@ end
 
 function BMaxModel:SetFileName(filename)
 	self.filename = filename;
+end
+
+function BMaxModel:GetNameAppearanceCount(name)
+	local nLastAppearance = 0;
+
+	for key, value in pairs(self.m_name_occurances) do
+		--print("occur", key, value, name);
+		if name == key then
+			nLastAppearance = value;
+			break;
+		end
+	end
+
+	self.m_name_occurances[name] = nLastAppearance + 1;
+	return nLastAppearance;
 end
