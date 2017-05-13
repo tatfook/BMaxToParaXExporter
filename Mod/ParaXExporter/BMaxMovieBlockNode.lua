@@ -135,8 +135,7 @@ function BMaxMovieBlockNode:ParseSpeed(timeseries)
 		end
 	else 
 		for _, animId in ipairs(self.m_animIds) do
-			print("aa", animId);
-			if self.animId == 4 or self.animId == 5 then
+			if animId == 4 or animId == 5 then
 				table.insert(self.m_speeds, BMaxMovieBlockNode.DefaultSpeed);
 				return;
 			end

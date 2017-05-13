@@ -317,8 +317,7 @@ function BMaxModel:ParseMovieBlocks()
 			local speed = currentBlock.m_speeds[i];
 			animTime = animTime and animTime or currentBlock.m_animTimes[1];
 			speed = speed and speed or currentBlock.m_speed[1];
-			print("anim", animTime, speed, animId);
-			self.actor_model:AddModelAnimation(startTime + animTime, endTime, 4, animId);
+			self.actor_model:AddModelAnimation(startTime + animTime, endTime, speed, animId);
 		end
 
 		if bone_anim then 
