@@ -284,47 +284,44 @@ function BMaxModel:ParseMovieBlocks()
 	end
 
 	local assetName;
-	local firstBlock;
 	-- parse mesh and vertice
 	for _, movieBlock in ipairs(self.m_movieBlocks) do
 		if not movieBlock:HasLastBlock() then
-			firstBlock = movieBlock;
-			firstBlock.animId = 0;
 			movieBlock:ParseActor();
 			assetName = movieBlock.asset_file;
 			self.actor_model = BMaxModel:new();
 			local actorFile = self:FindActorFile(assetName);
 			self.actor_model:Load(actorFile);
+
+			local nextIdx = movieBlock.nextBlock;
+			while nextIdx ~= -1 do
+				local currentBlock = self.m_nodes[nextIdx];
+				currentBlock:ParseActor(assetName);
+				nextIdx = currentBlock.nextBlock;
+			end
 		end
 	end
 
 	-- parse animation 
 	local startTime = 0;
 	--self.actor_model:AddModelAnimation(startTime, firstBlock.movieLength, 0, 0);
-	self.actor_model:AddBoneAnimation(startTime, nil);
-	startTime = startTime + firstBlock.movieLength + BMaxModel.MovieBlockInterval;
-	local next = firstBlock.nextBlock;
 
-	while next ~= -1 do
-		local currentBlock = self.m_nodes[next];
-		currentBlock:ParseActor(assetName);
+	for _, movieBlock in ipairs(self.m_movieBlocks) do
+		local endTime = startTime + movieBlock.movieLength;
 
-		local bone_anim = currentBlock:GetAnimData();
-		local endTime = startTime + currentBlock.movieLength;
-
-		for i, animId in ipairs(currentBlock.m_animIds) do
-			local animTime = currentBlock.m_animTimes[i];
-			local speed = currentBlock.m_speeds[i];
-			animTime = animTime and animTime or currentBlock.m_animTimes[1];
-			speed = speed and speed or currentBlock.m_speed[1];
+		for i, animId in ipairs(movieBlock.m_animIds) do
+			local animTime = movieBlock.m_animTimes[i];
+			local speed = movieBlock.m_speeds[i];
+			animTime = animTime and animTime or movieBlock.m_animTimes[1];
+			speed = speed and speed or movieBlock.m_speed[1];
 			self.actor_model:AddModelAnimation(startTime + animTime, endTime, speed, animId);
 		end
 
+		local bone_anim = movieBlock:GetAnimData();
 		if bone_anim then 
 			self.actor_model:AddBoneAnimation(startTime, bone_anim);
 		end
-		startTime = startTime + currentBlock.movieLength + BMaxModel.MovieBlockInterval;
-		next = currentBlock.nextBlock;
+		startTime = startTime + movieBlock.movieLength + BMaxModel.MovieBlockInterval;
 	end
 end
 
@@ -774,9 +771,9 @@ function BMaxModel:CreateDefaultAnimation()
 		self:CreateRootBone();
 	end
 
-	if #self.m_animations == 0 then
+	--[[if #self.m_animations == 0 then
 		self:AddIdleAnimation();
-	end
+	end--]]
 end
 
 function BMaxModel:CreateRootBone()

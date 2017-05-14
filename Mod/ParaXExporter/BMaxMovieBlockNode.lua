@@ -99,6 +99,7 @@ function BMaxMovieBlockNode:ParseActor(name)
 				if not self:HasLastBlock() then
 					self.actor_table = actor_table;
 					self.asset_file = asset_name;
+					self:ParseMovieDetail();
 					break;
 				else 
 					if asset_name == name then
