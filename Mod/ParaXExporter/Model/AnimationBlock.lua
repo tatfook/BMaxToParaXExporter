@@ -10,6 +10,8 @@ function AnimationBlock:ctor()
 	self.times = {};
 	self.ranges = {};
 	self.keys = {};
+	self.startRange = 0;
+	self.endRange = 0;
 end
 
 
@@ -25,10 +27,15 @@ function AnimationBlock:AddTime(time)
 end
 
 function AnimationBlock:AddRange()
-	local currentRange = 0;
-	if self.nRanges > 0 then
-		currentRange = self.ranges[self.nRanges][2] + 1;
+	if self.nTimes > 0 then
+		table.insert(self.ranges, {self.startRange, self.endRange});
+		self.nRanges = self.nRanges + 1;
 	end
-	table.insert(self.ranges, {currentRange, self.nTimes - 1});
-	self.nRanges = self.nRanges + 1;
 end
+
+
+function AnimationBlock:UpdateRange()
+	self.startRange = self.endRange + 1;
+	self.endRange = self.nTimes - 1;
+end
+

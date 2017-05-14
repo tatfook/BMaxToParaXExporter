@@ -180,7 +180,6 @@ function BMaxModel:InitFromBlocks(blocks)
 		if not block_content then
 			block_content = BlockEngine:GetBlockEntityData(v[1], v[2], v[3]);
 		end
-		--Common:PrintTable(block_content);
 		aabb:Extend(x,y,z);
 		
 		if template_id == BMaxModel.MovieBlockId then
@@ -303,23 +302,28 @@ function BMaxModel:ParseMovieBlocks()
 	end
 
 	-- parse animation 
-	local startTime = 0;
+	local startTime = 5000;
 	--self.actor_model:AddModelAnimation(startTime, firstBlock.movieLength, 0, 0);
 
 	for _, movieBlock in ipairs(self.m_movieBlocks) do
+		
+		local bone_anim = movieBlock:GetAnimData();
 		local endTime = startTime + movieBlock.movieLength;
+		if bone_anim then 
+			self.actor_model:AddBoneAnimation(startTime, endTime, bone_anim);
+			self.actor_model:UpdateBoneRange();
+		end
 
+		
 		for i, animId in ipairs(movieBlock.m_animIds) do
+			
 			local animTime = movieBlock.m_animTimes[i];
 			local speed = movieBlock.m_speeds[i];
 			animTime = animTime and animTime or movieBlock.m_animTimes[1];
-			speed = speed and speed or movieBlock.m_speed[1];
+			speed = speed and speed or movieBlock.m_speeds[1];
 			self.actor_model:AddModelAnimation(startTime + animTime, endTime, speed, animId);
-		end
+			print("anim", animId, startTime + animTime, endTime, speed);
 
-		local bone_anim = movieBlock:GetAnimData();
-		if bone_anim then 
-			self.actor_model:AddBoneAnimation(startTime, bone_anim);
 		end
 		startTime = startTime + movieBlock.movieLength + BMaxModel.MovieBlockInterval;
 	end
@@ -414,23 +418,19 @@ function BMaxModel:FindNeighbourFace(rectangle, i, faceIndex)
 		nextI = index + 1;
 	end
 	local fromNode, toNode = rectangle:GetNode(nextI);
-	--print("face", i, faceIndex, fromNode.x, fromNode.y, fromNode.z, toNode.x, toNode.y, toNode.z);
 	local nextOffset = Rectangle.DirectionOffsetTable[nextI]
 	local currentNode = fromNode;
 	local nodes = {};
 	if fromNode then
 		repeat 
 			local neighbourNode = currentNode:GetNeighbourByOffset(offset);
-			--print("neighbourNode", currentNode, neighbourNode);
 			if not neighbourNode or currentNode:GetColor() ~= neighbourNode:GetColor() or currentNode:GetBoneIndex() ~= neighbourNode:GetBoneIndex() then
 				return;
 			end
-			--print("index1", faceIndex, index, offset[1], offset[2], offset[3]);
 			local neighbourCube = neighbourNode:GetCube();
 			if not neighbourCube:IsFaceNotUse(faceIndex) then
 				return;
 			end 
-			--print("3");
 			table.insert(nodes, neighbourNode);
 
 			if currentNode == toNode then
@@ -441,9 +441,6 @@ function BMaxModel:FindNeighbourFace(rectangle, i, faceIndex)
 
 		local newFromNode = fromNode:GetNeighbourByOffset(offset);
 		local newToNode = toNode:GetNeighbourByOffset(offset);
-		--[[print("node2s", #nodes);
-		print("newFrom", newFromNode.x, newFromNode.y, newFromNode.z);
-		print("toNode", newToNode.x, newToNode.y, newToNode.z);--]]
 		for _, node in ipairs(nodes) do
 			local cube = node:GetCube();
 			cube:SetFaceUsed(faceIndex);
@@ -465,7 +462,6 @@ function BMaxModel:FillVerticesAndIndices()
 	local total_count = 0;
 	local nStartVertex = 0;
 
-	--print("node", Common:PrintNode(self.m_nodes));
 	for _, rectangle in ipairs(self.m_rectangles) do
 		local nIndexCount =  6;
 		local nVertices = 4;
@@ -490,10 +486,8 @@ function BMaxModel:FillVerticesAndIndices()
 		local vertex_weight = 255;
 
 		for i, vertice in ipairs(vertices) do
-			--print("adv", vertice.position[1], vertice.position[2], vertice.position[3]);
 			local modelVertex = ModelVertice:new();
 			modelVertex.pos = vertice.position;
-			--print("pos", modelVertex.pos[1], modelVertex.pos[2], modelVertex.pos[3]);
 			modelVertex.normal = vertice.normal;
 			modelVertex.color0 = vertice.color2;
 			modelVertex.weights[1] = vertex_weight;
@@ -629,7 +623,6 @@ function BMaxModel:CalculateBoneWeightFromNeighbours(node)
 				local pNeighbourNode = node:GetNeighbour(side);
 			
 				if pNeighbourNode and pNeighbourNode:HasBoneWeight() then
-					--print("node", node.x, node.y, node.z, pNeighbourNode.x, pNeighbourNode.y, pNeighbourNode.z, pNeighbourNode:GetBoneIndex(), i);
 					node:SetBoneIndex(pNeighbourNode:GetBoneIndex());
 					bFoundBone = true;
 				end
@@ -677,10 +670,10 @@ end
 function BMaxModel:AddModelAnimation(startTime, endTime, moveSpeed, animId)
 	for _, animation in ipairs(self.m_animations) do
 		if animation.animId == animId then
-			anim.timeStart = startTime;
-			anim.timeEnd = endTime;
-			anim.animId = animId;
-			anim.moveSpeed = moveSpeed;
+			animation.timeStart = startTime;
+			animation.timeEnd = endTime;
+			animation.animId = animId;
+			animation.moveSpeed = moveSpeed;
 			return;
 		end
 	end
@@ -690,16 +683,41 @@ function BMaxModel:AddModelAnimation(startTime, endTime, moveSpeed, animId)
 	anim.animId = animId;
 	anim.moveSpeed = moveSpeed;
 	table.insert(self.m_animations, anim);
+	self:AddBoneRange();
 end
 
-function BMaxModel:AddBoneAnimation(startTime, anim_data)
-	
-	if startTime ~= 0 then 
-		for _, frameNode in ipairs(self.m_bones) do
-			frameNode:GenerateStartFrame(startTime);
-		end
-	end
+function BMaxModel:AddBoneRange()
+	for _, frameNode in ipairs(self.m_bones) do
+		local bone = frameNode.bone;
 
+		local tranBlock = bone.translation;
+		local rotBlock =  bone.rotation;
+		local scaleBlock = bone.scaling;
+		
+		tranBlock:AddRange();
+		rotBlock:AddRange();
+		scaleBlock:AddRange();
+	end
+end
+
+function BMaxModel:UpdateBoneRange()
+	for _, frameNode in ipairs(self.m_bones) do
+		local bone = frameNode.bone;
+
+		local tranBlock = bone.translation;
+		local rotBlock =  bone.rotation;
+		local scaleBlock = bone.scaling;
+		
+		tranBlock:UpdateRange();
+		rotBlock:UpdateRange();
+		scaleBlock:UpdateRange();
+	end
+end
+
+function BMaxModel:AddBoneAnimation(startTime, endTime, anim_data)
+	for _, frameNode in ipairs(self.m_bones) do
+		frameNode:GenerateStartFrame(startTime);
+	end
 	if anim_data then 
 		for k, v in pairs(anim_data) do
 			if string.find(k, "bone") == 1 then
@@ -709,7 +727,6 @@ function BMaxModel:AddBoneAnimation(startTime, anim_data)
 					if frameNode then
 						local time = v.times;
 						local data = v.data;
-						local range = v.ranges;
 						local bone = frameNode.bone;
 
 						local block = nil;
@@ -734,17 +751,8 @@ function BMaxModel:AddBoneAnimation(startTime, anim_data)
 			end
 		end
 	end
-
 	for _, frameNode in ipairs(self.m_bones) do
-		local bone = frameNode.bone;
-
-		local tranBlock = bone.translation;
-		local rotBlock =  bone.rotation;
-		local scaleBlock = bone.scaling;
-		
-		tranBlock:AddRange();
-		rotBlock:AddRange();
-		scaleBlock:AddRange();
+		frameNode:GenerateStartFrame(endTime);
 	end
 end
 
@@ -835,7 +843,6 @@ function BMaxModel:GetNameAppearanceCount(name)
 	local nLastAppearance = 0;
 
 	for key, value in pairs(self.m_name_occurances) do
-		--print("occur", key, value, name);
 		if name == key then
 			nLastAppearance = value;
 			break;
