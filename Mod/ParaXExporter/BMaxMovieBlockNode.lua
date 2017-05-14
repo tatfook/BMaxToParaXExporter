@@ -147,7 +147,7 @@ end
 
 function BMaxMovieBlockNode:ParseAnimId(timeseries)
 
-	local signTitle = self.blockSignNode:GetSignTitle();
+	local signAnimId = self:GetSignAnimId();
 	
 	local animTable = timeseries.anim;
 	local animData = animTable.data;
@@ -161,18 +161,27 @@ function BMaxMovieBlockNode:ParseAnimId(timeseries)
 			table.insert(self.m_animTimes, animTime)
 		end
 
-	elseif signTitle then
-		local animIdStr, name = string.match(signTitle[1], "(%d+) (%w+)$"); 
-		local animId = tonumber(animId);
-		if animId then
-			table.insert(self.m_animIds, animId);
-			table.insert(self.m_animTimes, 0);
-		end
+	elseif signAnimId then
+		table.insert(self.m_animIds, signAnimId);
+		table.insert(self.m_animTimes, 0);
 	else 
 		table.insert(self.m_animIds, 0);
 		table.insert(self.m_animTimes, 0);
 	end
 
+end
+
+function BMaxMovieBlockNode:GetSignAnimId()
+	if self.blockSignNode then
+		local signTitle = self.blockSignNode:GetSignTitle();
+		if signTitle then
+			local animIdStr, name = string.match(signTitle[1], "(%d+) (%w+)$"); 
+			local animId = tonumber(animId);
+			if animId then
+				return animId;
+			end
+		end
+	end
 end
 
 function BMaxMovieBlockNode:GetAssetName(actor_table)
