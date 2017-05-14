@@ -675,6 +675,15 @@ function BMaxModel:CalculateBoneSkin(pBoneNode)
 end
 
 function BMaxModel:AddModelAnimation(startTime, endTime, moveSpeed, animId)
+	for _, animation in ipairs(self.m_animations) do
+		if animation.animId == animId then
+			anim.timeStart = startTime;
+			anim.timeEnd = endTime;
+			anim.animId = animId;
+			anim.moveSpeed = moveSpeed;
+			return;
+		end
+	end
 	local anim = ModelAnimation:new();
 	anim.timeStart = startTime;
 	anim.timeEnd = endTime;
@@ -771,23 +780,13 @@ function BMaxModel:CreateDefaultAnimation()
 		self:CreateRootBone();
 	end
 
-	--[[if #self.m_animations == 0 then
-		self:AddIdleAnimation();
-	end--]]
+	if #self.m_animations == 0 then
+		self:AddModelAnimation(0, 0, 0, 0);
+	end
 end
 
 function BMaxModel:CreateRootBone()
 	table.insert(self.m_bones, BMaxFrameNode:new());
-end
-
-function BMaxModel:AddIdleAnimation()
-	local anim = ModelAnimation:new();
-	anim.timeStart = 0;
-	anim.timeEnd = 0;
-	anim.animID = 0;
-	anim.moveSpeed = 0;
-	table.insert(self.m_animations, anim);
-
 end
 
 function BMaxModel:AddGeoset()

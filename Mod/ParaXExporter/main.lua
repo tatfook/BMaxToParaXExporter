@@ -78,7 +78,7 @@ end
 function ParaXExporter:OnClickExport()
 	NPL.load("(gl)script/apps/Aries/Creator/Game/GUI/SaveFileDialog.lua");
 	local SaveFileDialog = commonlib.gettable("MyCompany.Aries.Game.GUI.SaveFileDialog");
-	SaveFileDialog.ShowPage("please enter Parax file name", function(result)
+	SaveFileDialog.ShowPage(L"请输入ParaX文件名:", function(result)
 		if(result and result~="") then
 			ParaXExporter.last_filename = result;
 			local filename = GameLogic.GetWorldDirectory()..result;
@@ -160,8 +160,7 @@ function ParaXExporter:Export(input_file_name, output_file_name)
 					ParaGlobal.ShellExecute("open", ParaIO.GetCurDirectory(0)..output_file_name, "", "", 1);
 				end
 			end, _guihelper.MessageBoxButtons.YesNo);--]]
-			LOG.std(nil, "info", "ParaXExporter", "successful save ParaX file");
-	
+			GameLogic.AddBBS("ParaXModel", format(L"成功导出ParaX文件到%s.x", ParaXExporter.last_filename),  4000, "0 255 0")
 		end
 	else 
 		LOG.std(nil, "info", "ParaXExporter", "no valid input");
