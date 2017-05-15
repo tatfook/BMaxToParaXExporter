@@ -26,15 +26,19 @@ function AnimationBlock:AddTime(time)
 	self.nTimes = self.nTimes + 1;
 end
 
-function AnimationBlock:AddRange()
+function AnimationBlock:AddRange(index)
 	if self.nTimes > 0 then
-		table.insert(self.ranges, {self.startRange, self.endRange});
-		self.nRanges = self.nRanges + 1;
+		if index then 
+			self.ranges[index] = {self.startRange, self.endRange};
+		else
+			table.insert(self.ranges, {self.startRange, self.endRange});
+			self.nRanges = self.nRanges + 1;
+		end
 	end
 end
 
 
-function AnimationBlock:UpdateRange()
+function AnimationBlock:UpdateRange(animIndex)
 	self.startRange = self.endRange + 1;
 	self.endRange = self.nTimes - 1;
 end

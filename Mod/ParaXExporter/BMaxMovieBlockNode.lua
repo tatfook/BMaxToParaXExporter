@@ -35,10 +35,12 @@ function BMaxMovieBlockNode:ConnectMovieBlock()
 	end
 	
 	for i = 0, 5 do
-		local node = self:GetNeighbour(i);
+		local nextSide = BlockDirection:GetBlockSide(i)
+		local node = self:GetNeighbour(nextSide );
 		if node then
-			if node.template_id == BMaxModel.ReapeaterId then
-				local side = BlockDirection:GetBlockSide(node.block_data)
+			if node.template_id == BMaxModel.ReapeaterId and i == node.block_data then
+				print("t", i, node.block_data, self.x, self.y, self.z, node.x, node.y, node.z);
+				local side = BlockDirection:GetBlockSide(node.block_data);
 				self:ConnectNode(node, side);
 			elseif node.template_id == BMaxModel.BlockSignId then
 				self.blockSignNode = node;
@@ -62,6 +64,7 @@ function BMaxMovieBlockNode:ConnectNode(node, side)
 
 		if nextNode and opSide ~= nextSide and BlockDirection:IsGroundSide(nextSide) then
 			if nextNode.template_id == BMaxModel.MovieBlockId then
+				print("side", nextSide, opSide, nextNode.x, nextNode.y, nextNode.z);
 				nextNode.lastBlock = self:GetIndex();
 				self.nextBlock = nextNode:GetIndex();
 				nextNode:ConnectMovieBlock();

@@ -283,50 +283,52 @@ function BMaxModel:ParseMovieBlocks()
 	end
 
 	local assetName;
+	local nextIdx;
 	-- parse mesh and vertice
+	local startTime = 0;
 	for _, movieBlock in ipairs(self.m_movieBlocks) do
 		if not movieBlock:HasLastBlock() then
 			movieBlock:ParseActor();
 			assetName = movieBlock.asset_file;
+			if not assetName then
+				return;
+			end
 			self.actor_model = BMaxModel:new();
 			local actorFile = self:FindActorFile(assetName);
 			self.actor_model:Load(actorFile);
-
-			local nextIdx = movieBlock.nextBlock;
-			while nextIdx ~= -1 do
-				local currentBlock = self.m_nodes[nextIdx];
-				currentBlock:ParseActor(assetName);
-				nextIdx = currentBlock.nextBlock;
-			end
+			self:ParseMovieBlockAnimation(startTime, movieBlock);
+			startTime = startTime + movieBlock.movieLength + BMaxModel.MovieBlockInterval;
+			nextIdx = movieBlock.nextBlock;
 		end
 	end
-
-	-- parse animation 
-	local startTime = 5000;
-	--self.actor_model:AddModelAnimation(startTime, firstBlock.movieLength, 0, 0);
-
-	for _, movieBlock in ipairs(self.m_movieBlocks) do
-		
-		local bone_anim = movieBlock:GetAnimData();
-		local endTime = startTime + movieBlock.movieLength;
-		if bone_anim then 
-			self.actor_model:AddBoneAnimation(startTime, endTime, bone_anim);
-			self.actor_model:UpdateBoneRange();
-		end
-
-		
-		for i, animId in ipairs(movieBlock.m_animIds) do
-			
-			local animTime = movieBlock.m_animTimes[i];
-			local speed = movieBlock.m_speeds[i];
-			animTime = animTime and animTime or movieBlock.m_animTimes[1];
-			speed = speed and speed or movieBlock.m_speeds[1];
-			self.actor_model:AddModelAnimation(startTime + animTime, endTime, speed, animId);
-			print("anim", animId, startTime + animTime, endTime, speed);
-
-		end
-		startTime = startTime + movieBlock.movieLength + BMaxModel.MovieBlockInterval;
+	
+	while nextIdx ~= -1 do
+		local currentBlock = self.m_nodes[nextIdx];
+		currentBlock:ParseActor(assetName);
+		self:ParseMovieBlockAnimation(startTime, currentBlock);
+		nextIdx = currentBlock.nextBlock;
+		startTime = startTime + currentBlock.movieLength + BMaxModel.MovieBlockInterval;
 	end
+	
+end
+
+function BMaxModel:ParseMovieBlockAnimation(startTime, currentBlock)
+	local bone_anim = currentBlock:GetAnimData();
+	local endTime = startTime + currentBlock.movieLength;
+	if bone_anim then 
+		self.actor_model:AddBoneAnimation(startTime, endTime, bone_anim);
+		self.actor_model:UpdateBoneRange();
+	end
+
+	for i, animId in ipairs(currentBlock.m_animIds) do
+		local animTime = currentBlock.m_animTimes[i];
+		local speed = currentBlock.m_speeds[i];
+		animTime = animTime and animTime or currentBlock.m_animTimes[1];
+		speed = speed and speed or currentBlock.m_speeds[1];
+		self.actor_model:AddModelAnimation(startTime + animTime, endTime, speed, animId);
+		print("anim", animId, startTime + animTime, endTime, speed);
+	end
+	
 end
 
 function BMaxModel:ParseBlockFrames()
@@ -668,12 +670,13 @@ function BMaxModel:CalculateBoneSkin(pBoneNode)
 end
 
 function BMaxModel:AddModelAnimation(startTime, endTime, moveSpeed, animId)
-	for _, animation in ipairs(self.m_animations) do
+	for index, animation in ipairs(self.m_animations) do
 		if animation.animId == animId then
 			animation.timeStart = startTime;
 			animation.timeEnd = endTime;
 			animation.animId = animId;
 			animation.moveSpeed = moveSpeed;
+			self:AddBoneRange(index);
 			return;
 		end
 	end
@@ -686,7 +689,7 @@ function BMaxModel:AddModelAnimation(startTime, endTime, moveSpeed, animId)
 	self:AddBoneRange();
 end
 
-function BMaxModel:AddBoneRange()
+function BMaxModel:AddBoneRange(index)
 	for _, frameNode in ipairs(self.m_bones) do
 		local bone = frameNode.bone;
 
@@ -694,9 +697,9 @@ function BMaxModel:AddBoneRange()
 		local rotBlock =  bone.rotation;
 		local scaleBlock = bone.scaling;
 		
-		tranBlock:AddRange();
-		rotBlock:AddRange();
-		scaleBlock:AddRange();
+		tranBlock:AddRange(inedx);
+		rotBlock:AddRange(index);
+		scaleBlock:AddRange(index);
 	end
 end
 
@@ -715,10 +718,11 @@ function BMaxModel:UpdateBoneRange()
 end
 
 function BMaxModel:AddBoneAnimation(startTime, endTime, anim_data)
-	for _, frameNode in ipairs(self.m_bones) do
-		frameNode:GenerateStartFrame(startTime);
-	end
+	
 	if anim_data then 
+		for _, frameNode in ipairs(self.m_bones) do
+			frameNode:GenerateStartFrame(startTime);
+		end
 		for k, v in pairs(anim_data) do
 			if string.find(k, "bone") == 1 then
 				local name = v.name;
@@ -751,9 +755,6 @@ function BMaxModel:AddBoneAnimation(startTime, endTime, anim_data)
 			end
 		end
 	end
-	for _, frameNode in ipairs(self.m_bones) do
-		frameNode:GenerateStartFrame(endTime);
-	end
 end
 
 function BMaxModel:GetBone(bone_name)
@@ -765,6 +766,7 @@ function BMaxModel:GetBone(bone_name)
 		if bone_name == tranName then
 			return bone, "tran";
 		elseif bone_name == rotName then
+			print("rot", bone:GetBoneIndex(), bone_name);
 			return bone, "rot";
 		elseif bone_name == scaleName then
 			return bone, "scale";
