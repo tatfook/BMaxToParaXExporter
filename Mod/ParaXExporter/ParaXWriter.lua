@@ -60,14 +60,15 @@ function ParaXWriter:IsValid()
 	end
 end
 
-
 function ParaXWriter:WriteTemplate()
 	local file_name = "Mod/ParaXExporter/template.txt";
-	if(ParaIO.DoesFileExist(file_name)) then
+	if(ParaIO.DoesFileExist(file_name, true)) then
 		local template_file = ParaIO.open(file_name, "r");
-		local template_data = template_file:GetText(0, -1);
-		template_file:close();
-		self.file:write(template_data, #template_data);
+		if(template_file:IsValid()) then
+			local template_data = template_file:GetText(0, -1);
+			self.file:write(template_data, #template_data);
+			template_file:close();
+		end
 	end
 
 end
