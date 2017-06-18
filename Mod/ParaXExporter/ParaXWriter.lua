@@ -29,7 +29,6 @@ function ParaXWriter:ctor()
 end
 
 function ParaXWriter:SaveAsBinary(output_file_name)
-	ParaIO.CreateDirectory(output_file_name);
 
 	if(not self:IsValid()) then
 		return false;
@@ -38,15 +37,13 @@ function ParaXWriter:SaveAsBinary(output_file_name)
 	ParaIO.CreateDirectory(output_file_name);
 
 	self.file = ParaIO.open(output_file_name, "w");
-	if(self.file:IsValid()) then
-		self:WriteTemplate();
-		self:WriteHeader();
-		self:WriteBody();
-		self:WriteXDWordArray();
-		LOG.std(nil, "info", "ParaXWriter", "file written to %s with %d bytes", output_file_name, self.data_length);
-		self.file:close();
-		return true;
-	end
+	self:WriteTemplate();
+	self:WriteHeader();
+	self:WriteBody();
+	self:WriteXDWordArray();
+	LOG.std(nil, "info", "ParaXWriter", "file written to %s with %d bytes", output_file_name, self.data_length);
+	self.file:close();
+	return true;
 	
 end
 
@@ -532,7 +529,6 @@ function ParaXWriter:WriteRawData()
 		self.file:WriteShort(indice);
 	end 
 
-	print("12");
 	local bones = self.model.m_bones;
 
 	for _, frameNode in ipairs(bones) do

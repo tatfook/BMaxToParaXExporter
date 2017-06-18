@@ -65,10 +65,6 @@
     <None Include="Mod\ParaXExporter\Model\ModelVertice.lua" />
     <None Include="Mod\ParaXExporter\Model\ModelRenderPass.lua" />
     <None Include="Mod\ParaXExporter\Model\ModelGeoset.lua" />
-    <None Include="Mod\ParaXExporter\ParaXBody.lua" />
-    <None Include="Mod\ParaXExporter\ParaXHeader.lua" />
-    <None Include="Mod\ParaXExporter\ParaXMovieBlock.lua" />
-    <None Include="Mod\ParaXExporter\ParaXActor.lua" />
     <None Include="Mod\ParaXExporter\ParaXModel.lua" />
     <None Include="Mod\ParaXExporter\test\bone_color.bmax" />
     <None Include="Mod\ParaXExporter\test\input.bmax">

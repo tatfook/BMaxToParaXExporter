@@ -30,7 +30,7 @@ local BMaxNode = commonlib.inherit(nil,commonlib.gettable("Mod.ParaXExporter.BMa
 
 function BMaxNode:ctor()
 	self.neighborBlocks = {};
-	self.m_color = 0;
+	self.m_color = -1;
 
 	self.bone_index = -1;
 	self.block_model = nil;
@@ -47,13 +47,19 @@ function BMaxNode:init(model, x, y, z, template_id, block_data, block_content)
 	return self;
 end
 
+function BMaxNode:UpdatePosition(x, y, z)
+	self.x = x;
+	self.y = y;
+	self.z = z;
+end
+
 function BMaxNode:GetNeighbour(side)
 	local offset = BlockDirection:GetOffsetBySide(side);
 	local nX = self.x + offset.x;
 	local nY = self.y + offset.y;
 	local nZ = self.z + offset.z;
 	return self.model:GetNode(nX, nY, nZ);
-end
+end 
 
 function BMaxNode:GetNeighbourByOffset(offset)
 	local nX = self.x + offset[1];
@@ -241,7 +247,7 @@ function BMaxNode:QueryNeighborBlockData(pBlockData,nFrom,nTo)
 end
 
 function BMaxNode:GetColor()
-	if self.m_color ~= 0 then
+	if self.m_color ~= -1 then
 		return self.m_color;
 	end
 	if (self.block_data and self.block_data ~= 0) then
@@ -249,9 +255,13 @@ function BMaxNode:GetColor()
 		return self.m_color;
 	else 
 		local block_template = block_types.get(self.template_id);
-		self.m_color = block_template:GetBlockColor(self.x, self.y, self.z);
+		self.m_color = block_template:GetBlockColor(self.x, self.y, self.z)
 		return self.m_color;
 	end
+end
+
+function BMaxNode:SetColor(color)
+	self.m_color = color;
 end
 
 function BMaxNode:HasBoneWeight()
@@ -272,4 +282,8 @@ end
 
 function BMaxNode:ToBoneNode()
 	return nil;
+end
+
+function BMaxNode:IsBoneNode()
+	return false;
 end

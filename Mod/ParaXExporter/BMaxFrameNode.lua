@@ -25,6 +25,8 @@ function BMaxFrameNode:ctor()
 
 	self.startFrame = 0;
 	self.endFrame = 0;
+
+	self.m_nodes = {};
 end
 
 function BMaxFrameNode:init(model, x, y, z, template_id, block_data, bone_index)
@@ -62,7 +64,8 @@ end
 
 
 function BMaxFrameNode:UpdatePivot(m_fScale)
-	local x, y, z = self.x - self.model.m_centerPos[1] + BlockConfig.g_blockSize * 0.5, self.y + BlockConfig.g_blockSize * 0.5, self.z - self.model.m_centerPos[3] + BlockConfig.g_blockSize * 0.5;
+	local center = self.model.m_centerPos;
+	local x, y, z = self.x - center[1] + BlockConfig.g_blockSize * 0.5, self.y + BlockConfig.g_blockSize * 0.5, self.z - center[3] + BlockConfig.g_blockSize * 0.5;
 	local pivot =  vector3d:new({x,y,z});
 	self.bone.bUsePivot = true;
 	self.bone.pivot = pivot:MulByFloat(m_fScale);
@@ -70,8 +73,8 @@ function BMaxFrameNode:UpdatePivot(m_fScale)
 end
 
 function BMaxFrameNode:GetParent()
-	if (m_nParentIndex >= 0) then
-		local pParent = self.m_nodes[m_nParentIndex];
+	if (self.m_nParentIndex >= 0) then
+		local pParent = self.model.m_nodes[self.m_nParentIndex];
 		if pParent ~= nil then
 			return pParent;
 		end
@@ -80,7 +83,7 @@ function BMaxFrameNode:GetParent()
 end
 
 function BMaxFrameNode:GetColor()
-	if self.m_color ~= 0 then
+	if self.m_color ~= -1 then
 		return self.m_color;
 	end
 	
@@ -261,7 +264,7 @@ function BMaxFrameNode:IsAncestorOf(pChild)
 end
 
 function BMaxFrameNode:HasParent()
-	return m_nParentIndex >= 0;
+	return self.m_nParentIndex >= 0;
 end
 
 function BMaxFrameNode:AddBoneAnimation(startTime, endTime, time, data, range, anim)
@@ -287,6 +290,10 @@ end
 
 function BMaxFrameNode:ToBoneNode()
 	return self;
+end
+
+function BMaxFrameNode:IsBoneNode()
+	return true;
 end
 
 function BMaxFrameNode:GetBoneSide()

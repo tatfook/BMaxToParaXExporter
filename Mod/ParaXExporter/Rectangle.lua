@@ -47,9 +47,8 @@ Rectangle.DirectionOffsetTable = {
 };
 
 function Rectangle:ctor()
-	self.corners = {}
 	self.nodes = nil;
-	
+	self.retangleVertices = {};
 end
 
 function Rectangle:init(nodes, faceIndex)
@@ -73,17 +72,25 @@ function Rectangle:UpdateNode(fromNode, toNode, index)
 end
 
 function Rectangle:GetVertices()
-	local retangleVertices = {};
-	local startVertex = self.faceIndex * 4;
-	for i = 1, 4 do
-		local cube = self.nodes[i]:GetCube();
-		local vertices = cube:GetVertices();
-		table.insert(retangleVertices, vertices[startVertex + i])                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
-	end
-
-	return retangleVertices;
+	return self.retangleVertices;
 end
 
 function Rectangle:GetBoneIndex(index)
 	return self.nodes[index]:GetBoneIndex();
+end
+
+function Rectangle:CloneNodes()
+	local startVertex = self.faceIndex * 4;
+	for i = 1, 4 do
+		local cube = self.nodes[i]:GetCube();
+		local vertices = cube:GetVertices();
+		local pos = vector3d:new({})
+		table.insert(self.retangleVertices, vertices[startVertex + i]);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+	end
+end
+
+function Rectangle:ScaleVertices(scale)
+	for _, vertice in ipairs(self.retangleVertices) do
+		vertice.position = vertice.position:MulByFloat(scale);
+	end
 end
