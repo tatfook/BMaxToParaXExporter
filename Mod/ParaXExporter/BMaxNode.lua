@@ -86,11 +86,15 @@ function BMaxNode:TessellateBlock()
 
 	local color = self:GetColor();
 	for face = 0, 5 do
-		
+		local nFirstVertex = face * 4;
+
 		local pCurBlock = neighborBlocks[BlockCommon.RBP_SixNeighbors[face]];
+		--[[if #self.model.m_nodeIndexes == 1588 and self.x == 19 and self.y == 1 and self.z == 1 then
+			print("node0", self.x, self.y, self.z, face, pCurBlock);
+		end--]]
+			
 		if(not pCurBlock or pCurBlock:GetBoneIndex() ~= self.bone_index) then
 			for v = 0, 3 do
-				local nFirstVertex = face * 4;
 				local i = nFirstVertex + v;
 				--local nIndex = cube:AddVertex(temp_cube, i);
 				local nShadowLevel = 0;
@@ -107,7 +111,7 @@ function BMaxNode:TessellateBlock()
 					cube:SetVertexColor(i, color);
 				end
 			end
-
+			
 			cube:SetFaceVisiable(face);
 		end
 	end

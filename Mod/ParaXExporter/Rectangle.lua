@@ -66,7 +66,6 @@ end
 
 function Rectangle:UpdateNode(fromNode, toNode, index)
 	index = index % 4;
-	--print("index", index + 1, (index + 1) % 4 + 1);
 	self.nodes[index + 1] = fromNode;
 	self.nodes[(index + 1) % 4 + 1] = toNode;
 end

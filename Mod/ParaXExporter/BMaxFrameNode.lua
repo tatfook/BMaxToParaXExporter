@@ -37,7 +37,6 @@ function BMaxFrameNode:init(model, x, y, z, template_id, block_data, bone_index)
 	self.template_id = template_id;
 	self.block_data = block_data and block_data or 0;
 	self.n_index = bone_index;
-	self.bone_index = -1;
 	self.bone_name = nil;
 	self.m_children = {};
 
@@ -203,7 +202,6 @@ function BMaxFrameNode:GetParentBone(bRefresh)
 				local opSide = BlockDirection:GetOpSide(parentSide);
 				if opSide ~= side or (dx + dy + dz) < 0 then
 					if not self:IsAncestorOf(parent_node) then
-						--print("current", i, parent:GetBoneIndex());
 						self:SetParentIndex(parent:GetIndex());
 						break;
 					end
@@ -252,9 +250,9 @@ end
 
 function BMaxFrameNode:IsAncestorOf(pChild)
 	while (pChild) do
-		if (pChild == this) then
+		if (pChild == self) then
 			return true;
-		elseif (pChild:HasParent()) then
+		elseif (not pChild:HasParent()) then
 			return false;
 		else
 			pChild = pChild:GetParent();

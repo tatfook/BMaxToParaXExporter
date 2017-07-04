@@ -257,9 +257,10 @@ end
 
 function BMaxModel:CalculateAABB(nodes)
 	local aabb = ShapeAABB:new();
-	for _, node in ipairs(nodes) do
+	for _, node in pairs(nodes) do
 		aabb:Extend(node.x,node.y,node.z);
 	end
+
 	self.m_blockAABB = aabb;
 	self.m_centerPos = self.m_blockAABB:GetCenter();
 
@@ -275,6 +276,8 @@ function BMaxModel:CalculateAABB(nodes)
 	local offset_x = math.floor(blockMinX);
 	local offset_y = math.floor(blockMinY);
 	local offset_z = math.floor(blockMinZ);
+
+	print("offset", offset_x, offset_y, offset_z);
 
 	self.m_centerPos[1] = (width + 1.0) * 0.5;
 	self.m_centerPos[2] = 0;
@@ -292,7 +295,7 @@ function BMaxModel:CalculateAABB(nodes)
 
 	self.m_nodes = {};
 	self.m_nodeIndexes = {}; 
-	for k,node in ipairs(nodes) do
+	for k,node in pairs(nodes) do
 		node.x = node.x - offset_x;
 		node.y = node.y - offset_y;
 		node.z = node.z - offset_z;
@@ -310,6 +313,7 @@ end
 
 -- public: load from array of bone
 function BMaxModel:ParseBlockFrames()
+
 	for _, bone in ipairs(self.m_bones) do
 		bone:UpdatePivot(self.m_fScale);
 	end
@@ -325,24 +329,24 @@ end
 
 function BMaxModel:CalculateLod()
 	--local scale = 1;
-	local retangles = self:MergeCoplanerBlockFace();
-	self.m_originRectangles = retangles;
-	for _, retangles in ipairs(retangles) do
-		retangles:ScaleVertices(self.m_fScale);
+	local rectangles = self:MergeCoplanerBlockFace();
+	self.m_originRectangles = rectangles;
+	for _, rectangle in ipairs(rectangles) do
+		rectangle:ScaleVertices(self.m_fScale);
 	end
 	
 
-	local lodTable = self:GetLodTable(#retangles);
+	local lodTable = self:GetLodTable(#rectangles);
 	for i, nextFaceCount in ipairs(lodTable) do
-		while #retangles > nextFaceCount do
+		while #rectangles > nextFaceCount do
 			self:PerformLod();
-			retangles = self:MergeCoplanerBlockFace();
-			print("rect", #retangles);
+			rectangles = self:MergeCoplanerBlockFace();
+			print("rect", #rectangles);
 		end
-		for _, retangles in ipairs(retangles) do
-			retangles:ScaleVertices(self.m_fScale);
+		for _, rectangles in ipairs(rectangles) do
+			rectangles:ScaleVertices(self.m_fScale);
 		end
-		self.m_lodRectangles[i] = retangles;
+		self.m_lodRectangles[i] = rectangles;
 	end
 end
 
@@ -359,34 +363,19 @@ function BMaxModel:GetLodTable(faceCount)
 end
 
 function BMaxModel:PerformLod()
-	local aabb = ShapeAABB:new();
 	local width, height, depth = self:GetModelFrame();
 
 	local nodes = {};
 	local nodeIndexes = {};
-	local pos;
+	
 	for direction = 0, 3 do
 		local x = math.floor(self.m_centerPos[1]);
 		while x >= -1 and x <= width do 
 			for y = 0, height, 2 do
 				local z = math.floor(self.m_centerPos[3]);
 				while z >= -1 and z <= depth do 
-					local node = self:CalculateLodNode(x, y, z);
-					if node then 
-						local hasFind = false;
-						for _, node in ipairs(node) do
-							if node.x == x and node.y == y and node.z == z then
-								hasFind = true;
-								break
-							end
-						end
-						
-						if not hasFind then
-							aabb:Extend(node.x,node.y,node.z);
-							table.insert(nodes, node);
-						end
-						
-					end
+
+					self:CalculateLodNode(nodes, x, y, z);
 
 					if direction % 2 == 0 then
 						z = z + 2;
@@ -403,11 +392,12 @@ function BMaxModel:PerformLod()
 		end
 	end
 
+	
 	self:CalculateAABB(nodes);
 end
 
 function BMaxModel:MergeCoplanerBlockFace()
-	local retangles = {};
+	local rectangles = {};
 	for _, index in ipairs(self.m_nodeIndexes) do
 		local node = self.m_nodes[index];
 		node:TessellateBlock();
@@ -420,27 +410,31 @@ function BMaxModel:MergeCoplanerBlockFace()
 		
 		for i = 0, 5 do 
 			if cube:IsFaceNotUse(i) then
-				--print("node", node.x, node.y, node.z);
-				self:FindCoplanerFace(retangles, node, i);
+				self:FindCoplanerFace(rectangles, node, i);	
+				--[[if #self.m_nodeIndexes == 1588 then
+					print("node", node.x, node.y, node.z, i, node:GetBoneIndex())
+				end--]]
 			end
 		end	
 	end
-	print("rect count", #retangles);
-	return retangles;
+	print("rect count", #rectangles);
+	return rectangles;
 end 
 
-function BMaxModel:FindCoplanerFace(retangles, node, faceIndex)
+function BMaxModel:FindCoplanerFace(rectangles, node, faceIndex)
+	
 	local nodes = {node, node, node, node};
 	local rectangle = Rectangle:new():init(nodes, faceIndex);
 	if rectangle then 
 		for i = 0, 3 do
 			self:FindNeighbourFace(rectangle, i, faceIndex);
 			local cube = node:GetCube();
-			cube:SetFaceUsed(faceIndex);
+			cube:SetFaceUsed(faceIndex);	
+			
 		end
 	end
 	rectangle:CloneNodes();
-	table.insert(retangles, rectangle);
+	table.insert(rectangles, rectangle);
 end 
 
 function BMaxModel:FindNeighbourFace(rectangle, i, faceIndex)
@@ -488,7 +482,7 @@ function BMaxModel:FindNeighbourFace(rectangle, i, faceIndex)
 	end
 end
 
-function BMaxModel:CalculateLodNode(x, y, z)
+function BMaxModel:CalculateLodNode(nodes, x, y, z)
 	
 	local cnt = 0;
 
@@ -516,8 +510,8 @@ function BMaxModel:CalculateLodNode(x, y, z)
 								hasFind = true;
 								break;
 							elseif myBone:IsAncestorOf(bone) then
-								boneIndice[myBoneIndex] = v + 1;
-								table.remove(boneIndice, k);
+								boneIndices[k] = nil;
+								boneIndices[myBoneIndex] = v + 1;
 								hasFind = true;
 								break;
 							end
@@ -532,6 +526,7 @@ function BMaxModel:CalculateLodNode(x, y, z)
 							if k == myColor then
 								colors[k] = colors[k] + 1;
 								hasFind = true;
+								break;
 							end
 						end
 						if not hasFind then
@@ -544,8 +539,13 @@ function BMaxModel:CalculateLodNode(x, y, z)
 	end
 
 	if cnt >= 4 then
+		local newX = math.floor(x / 2) + 1;
+		local newY = math.floor(y / 2);
+		local newZ = math.floor(z / 2) + 1;
+		local nodeIndex = self:GetNodeIndex(newX, newY, newZ);
+
 		local maxNum = 0;
-		local node = BMaxNode:new():init(self, math.floor(x / 2) + 1, math.floor(y / 2), math.floor(z / 2) + 1);
+		local node = BMaxNode:new():init(self, newX, newY, newZ);
 		local color = nil;
 		for k, v in pairs(colors) do 
 			if v > maxNum then
@@ -569,10 +569,11 @@ function BMaxModel:CalculateLodNode(x, y, z)
 			node:SetBoneIndex(boneIndex);
 		end
 
-		return node;
-	else 
-		return nil
-	end
+		if nodes[nodeIndex] == nil then
+			nodes[nodeIndex] = node;
+		end
+
+	end 
 end
 
 function BMaxModel:CalculateBoneWeights()
@@ -674,7 +675,7 @@ function BMaxModel:ClearXModel()
 	self.m_renderPasses = {};
 end
 
-function BMaxModel:FillVerticesAndIndices(retangles)	
+function BMaxModel:FillVerticesAndIndices(rectangles)	
 	self:ClearXModel();
 	local aabb = ShapeAABB:new();
 	local geoset = self:AddGeoset();
@@ -686,7 +687,7 @@ function BMaxModel:FillVerticesAndIndices(retangles)
 	local nStartVertex = 0;
 	local rootBoneIndex = self:FindRootBoneIndex(); 
 
-	for _, rectangle in ipairs(retangles) do
+	for _, rectangle in ipairs(rectangles) do
 		local nIndexCount =  6;
 		local nVertices = 4;
 		local vertices = rectangle:GetVertices();
