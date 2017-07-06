@@ -277,8 +277,6 @@ function BMaxModel:CalculateAABB(nodes)
 	local offset_y = math.floor(blockMinY);
 	local offset_z = math.floor(blockMinZ);
 
-	print("offset", offset_x, offset_y, offset_z);
-
 	self.m_centerPos[1] = (width + 1.0) * 0.5;
 	self.m_centerPos[2] = 0;
 	self.m_centerPos[3]= (depth + 1.0) * 0.5;
@@ -301,6 +299,7 @@ function BMaxModel:CalculateAABB(nodes)
 		node.z = node.z - offset_z;
 		self:InsertNode(node);
 	end
+	print("node23", #self.m_nodeIndexes);
 	table.sort(self.m_nodeIndexes);
 end
 
@@ -341,7 +340,6 @@ function BMaxModel:CalculateLod()
 		while #rectangles > nextFaceCount do
 			self:PerformLod();
 			rectangles = self:MergeCoplanerBlockFace();
-			print("rect", #rectangles);
 		end
 		for _, rectangles in ipairs(rectangles) do
 			rectangles:ScaleVertices(self.m_fScale);
@@ -410,10 +408,7 @@ function BMaxModel:MergeCoplanerBlockFace()
 		
 		for i = 0, 5 do 
 			if cube:IsFaceNotUse(i) then
-				self:FindCoplanerFace(rectangles, node, i);	
-				--[[if #self.m_nodeIndexes == 1588 then
-					print("node", node.x, node.y, node.z, i, node:GetBoneIndex())
-				end--]]
+				self:FindCoplanerFace(rectangles, node, i);
 			end
 		end	
 	end
@@ -539,9 +534,9 @@ function BMaxModel:CalculateLodNode(nodes, x, y, z)
 	end
 
 	if cnt >= 4 then
-		local newX = math.floor(x / 2) + 1;
+		local newX = math.floor((x + 1) / 2);
 		local newY = math.floor(y / 2);
-		local newZ = math.floor(z / 2) + 1;
+		local newZ = math.floor((z + 1) / 2);
 		local nodeIndex = self:GetNodeIndex(newX, newY, newZ);
 
 		local maxNum = 0;
