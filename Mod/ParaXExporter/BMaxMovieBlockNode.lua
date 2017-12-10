@@ -134,7 +134,7 @@ function BMaxMovieBlockNode:ParseSpeed(timeseries)
 	local speedScaleTable = timeseries.speedscale;
 	local speedData = speedScaleTable.data;
 	if #speedData > 0 then
-		for _, spped in ipairs(speedData) do
+		for _, speed in ipairs(speedData) do
 			table.insert(self.m_speeds, speed)
 		end
 	else 

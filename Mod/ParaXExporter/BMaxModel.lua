@@ -218,7 +218,7 @@ end
 -- @param length: length of model
 function BMaxModel:CalculateScale(length)
 	local nPowerOf2Length = mathlib.NextPowerOf2( math.floor(length + 0.1) );
-	print ("nPowerOf2Length", nPowerOf2Length);
+	-- print ("nPowerOf2Length", nPowerOf2Length);
 
 	return BlockConfig.g_blockSize / nPowerOf2Length;
 end
@@ -852,7 +852,7 @@ function BMaxModel:ParseMovieBlockAnimation(startTime, currentBlock)
 		local animTime = currentBlock.m_animTimes[i];
 		local speed = currentBlock.m_speeds[i];
 		animTime = animTime and animTime or currentBlock.m_animTimes[1];
-		speed = speed and speed or currentBlock.m_speeds[1];
+		speed = speed or currentBlock.m_speeds[1] or 0;
 		self.actor_model:AddModelAnimation(startTime + animTime, endTime, speed, animId);
 		-- print("anim", animId, startTime + animTime, endTime, speed);
 	end
