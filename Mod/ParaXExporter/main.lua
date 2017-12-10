@@ -113,7 +113,6 @@ end
 -- @param input_file_name: file name. if it is *.bmax, we will convert this file and save output to *.x file.
 -- if it is not, we will convert current selection to *.x files. 
 -- @param output_file_name: this should be nil, unless you explicitly specify an output name.
--- @param -native: use C++ exporter, instead of NPL.
 function ParaXExporter:Export(input_file_name, output_file_name)
 
 	local name, extension = string.match(input_file_name,"(.+)%.(%w+)$");
@@ -128,11 +127,11 @@ function ParaXExporter:Export(input_file_name, output_file_name)
 		end
 	end
 
-	LOG.std(nil, "info", "ParaXExporter", "exporting from %s to %s", input_file_name, output_file_name);
 	local model = BMaxModel:new();
 	local isValid = true;
 	if(extension == "bmax") then
 		if ParaIO.DoesFileExist(input_file_name) then
+			LOG.std(nil, "info", "ParaXExporter", "exporting from %s to %s", input_file_name, output_file_name);
 			model:Load(input_file_name);
 		else 
 			isValid = false;
@@ -140,6 +139,25 @@ function ParaXExporter:Export(input_file_name, output_file_name)
 	else
 		local blocks = Game.SelectionManager:GetSelectedBlocks();
 		if(blocks) then
+			if(#blocks == 1) then
+				local v = blocks[1];
+				local entity = Game.BlockEngine:GetBlockEntity(v[1], v[2], v[3]);
+				if(entity and entity:isa(Game.EntityManager.EntityBlockModel)) then
+					-- if there is only one entity block model, we will simply export the model data
+					local filename = entity:GetModelDiskFilePath();
+					NPL.load("(gl)script/ide/System/Scene/Assets/ParaXModelAttr.lua");
+					local ParaXModelAttr = commonlib.gettable("System.Scene.Assets.ParaXModelAttr");
+					local attr = ParaXModelAttr:new():initFromPlayer(entity:GetInnerObject())
+					if(not extension) then
+						output_file_name = input_file_name..".x";
+					end
+					LOG.std(nil, "info", "ParaXExporter", "exporting from %s to %s", filename, output_file_name);
+					attr:SaveToDisk(output_file_name);
+					GameLogic.AddBBS(nil, format(L"file %s exported to %s", filename, output_file_name));
+					return;
+				end
+			end
+			LOG.std(nil, "info", "ParaXExporter", "exporting from selection to %s", output_file_name);
 			model:LoadFromBlocks(blocks);
 		end
 	end
