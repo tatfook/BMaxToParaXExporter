@@ -42,7 +42,7 @@ function BMaxAnimGenerator:ParseParameters(bone_info, bone_index)
 		return;
 	end
 
-	print(cmd);
+	-- print(cmd);
 	local cmd_content = cmd[1];
 	local bone_flag = "default";
 

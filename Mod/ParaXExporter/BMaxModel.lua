@@ -281,7 +281,7 @@ function BMaxModel:CalculateAABB(nodes)
 	self.m_centerPos[2] = 0;
 	self.m_centerPos[3]= (depth + 1.0) * 0.5;
 
-	print("center", self.m_centerPos[1], self.m_centerPos[2], self.m_centerPos[3]);
+	-- print("center", self.m_centerPos[1], self.m_centerPos[2], self.m_centerPos[3]);
 
 	if (self.m_bAutoScale) then
 		local fMaxLength = math.max(math.max(height, width), depth) + 1;
@@ -299,7 +299,7 @@ function BMaxModel:CalculateAABB(nodes)
 		node.z = node.z - offset_z;
 		self:InsertNode(node);
 	end
-	print("node23", #self.m_nodeIndexes);
+	-- print("node23", #self.m_nodeIndexes);
 	table.sort(self.m_nodeIndexes);
 end
 
@@ -412,7 +412,7 @@ function BMaxModel:MergeCoplanerBlockFace()
 			end
 		end	
 	end
-	print("rect count", #rectangles);
+	-- print("rect count", #rectangles);
 	return rectangles;
 end 
 
@@ -737,7 +737,7 @@ function BMaxModel:FillVerticesAndIndices(rectangles)
 	self.m_minExtent = aabb:GetMin();
 	self.m_maxExtent = aabb:GetMax();
 	
-	print("m_minExtent", self.m_minExtent[1], self.m_minExtent[2], self.m_minExtent[3], self.m_maxExtent[1], self.m_maxExtent[2], self.m_maxExtent[3]);
+	-- print("m_minExtent", self.m_minExtent[1], self.m_minExtent[2], self.m_minExtent[3], self.m_maxExtent[1], self.m_maxExtent[2], self.m_maxExtent[3]);
 
 	--[[for _, index in ipairs(self.m_nodeIndexes) do
 		local node = self.m_nodes[index];
@@ -854,7 +854,7 @@ function BMaxModel:ParseMovieBlockAnimation(startTime, currentBlock)
 		animTime = animTime and animTime or currentBlock.m_animTimes[1];
 		speed = speed and speed or currentBlock.m_speeds[1];
 		self.actor_model:AddModelAnimation(startTime + animTime, endTime, speed, animId);
-		print("anim", animId, startTime + animTime, endTime, speed);
+		-- print("anim", animId, startTime + animTime, endTime, speed);
 	end
 end
 
@@ -886,7 +886,7 @@ function BMaxModel:AddBoneRange(index)
 		local rotBlock =  bone.rotation;
 		local scaleBlock = bone.scaling;
 		
-		tranBlock:AddRange(inedx);
+		tranBlock:AddRange(index);
 		rotBlock:AddRange(index);
 		scaleBlock:AddRange(index);
 	end
@@ -948,14 +948,13 @@ end
 
 function BMaxModel:GetBone(bone_name)
 	for _, bone in ipairs(self.m_bones) do
-		local tranName = bone.bone_name.."_".."trans";
-		local rotName = bone.bone_name.."_".."rot";
-		local scaleName = bone.bone_name.."_".."scale";
-		local anim;
+		local tranName = bone.bone_name.."_trans";
+		local rotName = bone.bone_name.."_rot";
+		local scaleName = bone.bone_name.."_scale";
 		if bone_name == tranName then
-			return bone, "tran";
+			return bone, "trans";
 		elseif bone_name == rotName then
-			print("rot", bone:GetBoneIndex(), bone_name);
+			-- print("rot", bone:GetBoneIndex(), bone_name);
 			return bone, "rot";
 		elseif bone_name == scaleName then
 			return bone, "scale";
