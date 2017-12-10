@@ -163,6 +163,7 @@ function ParaXExporter:Export(input_file_name, output_file_name)
 	end
 
 	if isValid then
+		output_file_name = output_file_name:gsub("%.x[ml]*$", "");
 		local actor_model;
 
 		if model.m_modelType == BMaxModel.ModelTypeBlockModel then
@@ -186,21 +187,24 @@ function ParaXExporter:Export(input_file_name, output_file_name)
 		if lodRectangles then
 			for index, retangle in ipairs(lodRectangles) do
 				actor_model:FillVerticesAndIndices(retangle);
-				self:WriteParaXFile(actor_model, output_file_name, BMaxModel.LodIndexToMeter[index]);
+				self:WriteParaXFile(actor_model, output_file_name, BMaxModel.LodIndexToMeter[index+1]);
 			end
 		end
-
 
 		local filename = output_file_name .. ".xml";
 		local root_node = {name = "mesh", attr = {version = "1", type = "0"}};
 
 		local boundingTable = {minx=boundingMin[1], miny=boundingMin[2], minz=boundingMin[3],
 							   maxx=boundindMax[1], maxy=boundindMax[2], maxz=boundindMax[3]};
-		root_node[1] = {name = "boundingbox", attr = boundingTable};
+		root_node[#root_node+1] = {name = "boundingbox", attr = boundingTable};
+		root_node[#root_node+1] = {name = "submesh", attr = {loddist = BMaxModel.LodIndexToMeter[1], 
+			filename = string.match(output_file_name, "[^/\\]+$") ..".x"}};
+
+		local nOffset = #root_node;
 		for i = 1, #self.lodFiles do
 			local lodFile = self.lodFiles[i];
 			local lodAttrTable = {loddist = lodFile.m, filename = lodFile.filename};
-			root_node[i + 1] = {name = "submesh", attr = lodAttrTable};
+			root_node[i + nOffset] = {name = "submesh", attr = lodAttrTable};
 		end
 		self:WriteXMLFile(filename, root_node);
 		

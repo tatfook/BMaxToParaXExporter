@@ -72,7 +72,7 @@ BMaxModel.ActorId = 10062;
 
 BMaxModel.MovieBlockInterval = 1000;
 
-BMaxModel.LodIndexToMeter = {5, 15, 30};
+BMaxModel.LodIndexToMeter = {5, 15, 30, 100};
 
 function BMaxModel:ctor()
 	-- if it is the movie bmax file;
