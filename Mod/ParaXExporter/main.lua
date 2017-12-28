@@ -61,7 +61,7 @@ end
 function ParaXExporter:RegisterExporter()
 	GameLogic.GetFilters():add_filter("GetExporters", function(exporters)
 		local title = L"ParaX 动画模型导出";
-		local desc = L"将多个电影方块导出为 *.x 动画文件";
+		local desc = L"将模型方块或多个电影方块导出为 *.x 动画文件";
 		exporters[#exporters+1] = {id="ParaX", title=title, desc=desc}
 		return exporters;
 	end);
@@ -99,7 +99,12 @@ function ParaXExporter:RegisterCommand()
 		handler = function(cmd_name, cmd_text, cmd_params, fromEntity)
 			local file_name;
 			file_name,cmd_text = CmdParser.ParseString(cmd_text);
-			self:Export(file_name);
+			if(file_name and filename~="") then
+				if(not file_name:match("[/\\]")) then
+					file_name = GameLogic.GetWorldDirectory()..file_name;
+				end
+				self:Export(nil, file_name);
+			end
 		end,
 	};
 end
@@ -114,17 +119,21 @@ end
 -- if it is not, we will convert current selection to *.x files. 
 -- @param output_file_name: this should be nil, unless you explicitly specify an output name.
 function ParaXExporter:Export(input_file_name, output_file_name)
-
-	local name, extension = string.match(input_file_name,"(.+)%.(%w+)$");
-
+	local name, extension;
+	if( input_file_name ) then
+		 name, extension = string.match(input_file_name,"(.+)%.(%w+)$");
+	end
 	if(not output_file_name)then
 		if(extension == "bmax") then
 			output_file_name = name;
 		elseif(extension == "x") then
 			output_file_name = name;
 		else
-			output_file_name = input_file_name;
+			return;
 		end
+	end
+	if(not output_file_name:match("%.x[ml]*$")) then
+		output_file_name = output_file_name .. ".x";
 	end
 
 	local model = BMaxModel:new();
@@ -148,12 +157,9 @@ function ParaXExporter:Export(input_file_name, output_file_name)
 					NPL.load("(gl)script/ide/System/Scene/Assets/ParaXModelAttr.lua");
 					local ParaXModelAttr = commonlib.gettable("System.Scene.Assets.ParaXModelAttr");
 					local attr = ParaXModelAttr:new():initFromPlayer(entity:GetInnerObject())
-					if(not extension) then
-						output_file_name = input_file_name..".x";
-					end
 					LOG.std(nil, "info", "ParaXExporter", "exporting from %s to %s", filename, output_file_name);
 					attr:SaveToDisk(output_file_name);
-					GameLogic.AddBBS(nil, format(L"file %s exported to %s", filename, output_file_name));
+					GameLogic.AddBBS(nil, format(L"file %s exported to %s", commonlib.Encoding.DefaultToUtf8(filename), commonlib.Encoding.DefaultToUtf8(output_file_name)));
 					return;
 				end
 			end
@@ -207,7 +213,7 @@ function ParaXExporter:Export(input_file_name, output_file_name)
 			root_node[i + nOffset] = {name = "submesh", attr = lodAttrTable};
 		end
 		self:WriteXMLFile(filename, root_node);
-		
+		GameLogic.AddBBS("ParaXModel", format(L"成功导出ParaX文件到%s", commonlib.Encoding.DefaultToUtf8(filename)),  4000, "0 255 0");
 	else
 		LOG.std(nil, "info", "ParaXExporter", "no valid input");
 	end
@@ -244,7 +250,6 @@ function ParaXExporter:WriteParaXFile(model, output_file_name, meter)
 				ParaGlobal.ShellExecute("open", ParaIO.GetCurDirectory(0)..output_file_name, "", "", 1);
 			end
 		end, _guihelper.MessageBoxButtons.YesNo);--]]
-		GameLogic.AddBBS("ParaXModel", format(L"成功导出ParaX文件到%s.x", ParaXExporter.last_filename),  4000, "0 255 0");
-		
 	end
+	return res;
 end
