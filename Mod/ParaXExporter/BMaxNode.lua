@@ -253,7 +253,7 @@ end
 function BMaxNode:GetColor()
 	if self.m_color == -1 then
 		local block_template = block_types.get(self.template_id);
-		self.m_color = block_template:GetBlockColor(self.x, self.y, self.z)	
+		self.m_color = block_template:GetBlockColor(self.x, self.y, self.z)	or 0;
 	end
 	return self.m_color;
 end

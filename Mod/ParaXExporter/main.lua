@@ -98,7 +98,7 @@ function ParaXExporter:RegisterCommand()
 ]], 
 		handler = function(cmd_name, cmd_text, cmd_params, fromEntity)
 			local file_name;
-			file_name,cmd_text = CmdParser.ParseString(cmd_text);
+			file_name = (cmd_text or ""):gsub("^%s+", ""):gsub("%s+$", "");
 			if(file_name and filename~="") then
 				if(not file_name:match("[/\\]")) then
 					file_name = GameLogic.GetWorldDirectory()..file_name;
