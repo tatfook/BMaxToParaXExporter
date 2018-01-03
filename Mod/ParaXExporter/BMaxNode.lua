@@ -251,17 +251,11 @@ function BMaxNode:QueryNeighborBlockData(pBlockData,nFrom,nTo)
 end
 
 function BMaxNode:GetColor()
-	if self.m_color ~= -1 then
-		return self.m_color;
-	end
-	if (self.block_data and self.block_data ~= 0) then
-		self.m_color = Color.convert16_32(self.block_data);
-		return self.m_color;
-	else 
+	if self.m_color == -1 then
 		local block_template = block_types.get(self.template_id);
-		self.m_color = block_template:GetBlockColor(self.x, self.y, self.z)
-		return self.m_color;
+		self.m_color = block_template:GetBlockColor(self.x, self.y, self.z)	
 	end
+	return self.m_color;
 end
 
 function BMaxNode:SetColor(color)
