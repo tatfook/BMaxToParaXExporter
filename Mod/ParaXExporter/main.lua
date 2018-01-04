@@ -177,6 +177,10 @@ function ParaXExporter:Export(input_file_name, output_file_name)
 		elseif model.m_modelType == BMaxModel.ModelTypeMovieModel then
 			actor_model = model.actor_model;
 		end
+		if(not actor_model) then
+			LOG.std(nil, "warn", "ParaXExporter", "actor model not found in %s", output_file_name);
+			return;
+		end
 
 		local boundingMin;
 		local boundindMax;
