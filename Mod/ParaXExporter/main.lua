@@ -159,7 +159,7 @@ function ParaXExporter:Export(input_file_name, output_file_name)
 					local attr = ParaXModelAttr:new():initFromPlayer(entity:GetInnerObject())
 					LOG.std(nil, "info", "ParaXExporter", "exporting from %s to %s", filename, output_file_name);
 					attr:SaveToDisk(output_file_name);
-					GameLogic.AddBBS(nil, format(L"文件 %s 导出到 %s", commonlib.Encoding.DefaultToUtf8(filename), commonlib.Encoding.DefaultToUtf8(output_file_name)));
+					GameLogic.AddBBS(nil, format(L"文件导出到 %s", commonlib.Encoding.DefaultToUtf8(output_file_name)));
 					return;
 				end
 			end
