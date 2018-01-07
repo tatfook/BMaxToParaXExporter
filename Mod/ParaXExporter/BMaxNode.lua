@@ -68,7 +68,15 @@ function BMaxNode:GetNeighbourByOffset(offset)
 	return self.model:GetNode(nX, nY, nZ);
 end
 
+local names = commonlib.gettable("MyCompany.Aries.Game.block_types.names")
+
 function BMaxNode:TessellateBlock()
+	local block_template = block_types.get(self.template_id);
+
+	if( block_template and not block_template.solid and self.template_id~=names.Bone) then
+		-- skip rendering non-solid blocks like wires that only connect other blocks.
+		return;
+	end
 
 	local cube = BlockModel:new();
 	local nNearbyBlockCount = 27;
@@ -93,7 +101,7 @@ function BMaxNode:TessellateBlock()
 			print("node0", self.x, self.y, self.z, face, pCurBlock);
 		end--]]
 			
-		if(not pCurBlock or pCurBlock:GetBoneIndex() ~= self.bone_index) then
+		if(not pCurBlock or (pCurBlock:GetBoneIndex() ~= self.bone_index) or not pCurBlock.solid) then
 			for v = 0, 3 do
 				local i = nFirstVertex + v;
 				--local nIndex = cube:AddVertex(temp_cube, i);
@@ -253,7 +261,7 @@ end
 function BMaxNode:GetColor()
 	if self.m_color == -1 then
 		local block_template = block_types.get(self.template_id);
-		self.m_color = block_template:GetBlockColor(self.x, self.y, self.z)	or 0;
+		self.m_color = block_template:GetBlockColorByData(self.block_data)	or 0;
 	end
 	return self.m_color;
 end

@@ -82,9 +82,10 @@ function Rectangle:CloneNodes()
 	local startVertex = self.faceIndex * 4;
 	for i = 1, 4 do
 		local cube = self.nodes[i]:GetCube();
-		local vertices = cube:GetVertices();
-		local pos = vector3d:new({})
-		table.insert(self.retangleVertices, vertices[startVertex + i]);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+		if(cube) then
+			local vertices = cube:GetVertices();
+			table.insert(self.retangleVertices, vertices[startVertex + i]);
+		end
 	end
 end
 

@@ -405,12 +405,13 @@ function BMaxModel:MergeCoplanerBlockFace()
 	for _, index in ipairs(self.m_nodeIndexes) do
 		local node = self.m_nodes[index];
 		local cube = node:GetCube();
-		
-		for i = 0, 5 do 
-			if cube:IsFaceNotUse(i) then
-				self:FindCoplanerFace(rectangles, node, i);
-			end
-		end	
+		if(cube) then
+			for i = 0, 5 do 
+				if cube:IsFaceNotUse(i) then
+					self:FindCoplanerFace(rectangles, node, i);
+				end
+			end	
+		end
 	end
 	-- print("rect count", #rectangles);
 	return rectangles;
@@ -424,7 +425,9 @@ function BMaxModel:FindCoplanerFace(rectangles, node, faceIndex)
 		for i = 0, 3 do
 			self:FindNeighbourFace(rectangle, i, faceIndex);
 			local cube = node:GetCube();
-			cube:SetFaceUsed(faceIndex);	
+			if(cube) then
+				cube:SetFaceUsed(faceIndex);	
+			end
 			
 		end
 	end
@@ -455,7 +458,7 @@ function BMaxModel:FindNeighbourFace(rectangle, i, faceIndex)
 				return;
 			end
 			local neighbourCube = neighbourNode:GetCube();
-			if not neighbourCube:IsFaceNotUse(faceIndex) then
+			if not neighbourCube or not neighbourCube:IsFaceNotUse(faceIndex) then
 				return;
 			end 
 			table.insert(nodes, neighbourNode);
@@ -470,7 +473,9 @@ function BMaxModel:FindNeighbourFace(rectangle, i, faceIndex)
 		local newToNode = toNode:GetNeighbourByOffset(offset);
 		for _, node in ipairs(nodes) do
 			local cube = node:GetCube();
-			cube:SetFaceUsed(faceIndex);
+			if(cube) then
+				cube:SetFaceUsed(faceIndex);
+			end
 		end
 		rectangle:UpdateNode(newFromNode, newToNode, nextI);
 		self:FindNeighbourFace(rectangle, i, faceIndex);
