@@ -169,6 +169,29 @@ function BMaxModel:LoadFromBlocks(blocks)
 	end
 end
 
+local function GetBoneNameFromEntityData(node)
+	local cmd_text;
+	if(node) then
+		for i=1, #node do
+			sub_node = node[i];
+			if(sub_node.name == "cmd") then
+				local cmd = sub_node[1]
+				if(cmd) then
+					if(type(cmd) == "string") then
+						cmd_text = cmd;
+					elseif(type(cmd) == "table" and type(cmd[1]) == "string") then
+						cmd_text = cmd[1];
+					end
+				end
+			end
+		end
+	end
+	if(cmd_text) then
+		cmd_text = cmd_text:gsub("^%s+",""):gsub("%s+$","")
+	end
+	return cmd_text;
+end
+
 -- load from array of blocks
 -- @param blocks: array of {x,y,z,id, data, serverdata}
 function BMaxModel:InitFromBlocks(blocks)
@@ -183,9 +206,6 @@ function BMaxModel:InitFromBlocks(blocks)
 		local template_id = v[4];
 		local block_data = v[5];
 		local block_content = v[6];
-		if not block_content then
-			block_content = BlockEngine:GetBlockEntityData(v[1], v[2], v[3]);
-		end
 		
 		if template_id == BMaxModel.MovieBlockId then
 			self.m_modelType = BMaxModel.ModelTypeMovieModel;
@@ -200,6 +220,9 @@ function BMaxModel:InitFromBlocks(blocks)
 
 			local nBoneIndex = #self.m_bones;
 			local frameNode = BMaxFrameNode:new():init(self, x, y, z, template_id, block_data, nBoneIndex);
+			if(block_content) then
+				frameNode.bone_name = GetBoneNameFromEntityData(block_content);
+			end
 		 	frameNode:GenerateStartFrame(0);
 
 			table.insert(nodes, frameNode);

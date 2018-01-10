@@ -164,6 +164,11 @@ function ParaXExporter:Export(input_file_name, output_file_name)
 				end
 			end
 			LOG.std(nil, "info", "ParaXExporter", "exporting from selection to %s", output_file_name);
+			-- update block entity data if any
+			for _, b in ipairs(blocks) do
+				b[6] = b[6] or Game.BlockEngine:GetBlockEntityData(b[1], b[2], b[3]);
+			end
+			
 			model:LoadFromBlocks(blocks);
 		end
 	end

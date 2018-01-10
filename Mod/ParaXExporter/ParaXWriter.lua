@@ -408,14 +408,33 @@ function ParaXWriter:WriteXBones()
 		local bone = frameNode.bone;
 		if bone then 
 			self.file:WriteInt(bone.animid);
-			self.file:WriteInt(bone.flags);
+			-- here we will use the new format with bone names
+			self.file:WriteInt(mathlib.bit.bor(bone.flags, 0x80000000));
 			self.file:WriteInt(bone.parent);
 			self.file:WriteInt(bone.boneid);
 		
 			self:WriteAnimationBlock(bone.translation, 12);
 			self:WriteAnimationBlock(bone.rotation, 16);
 			self:WriteAnimationBlock(bone.scaling, 12);
-			self:Write3DVector(bone.pivot, true);
+
+			self:WriteToken("<flt_list>");
+			self.file:WriteInt(3);
+
+			-- nBoneName
+			local bone_name = frameNode.bone_name or "";
+			if(bone_name~="") then
+				self.file:WriteInt(self.offset);
+				self:AddFileOffset(#bone_name+1);
+			else
+				self.file:WriteInt(0);
+			end
+			-- nOffsetMatrix
+			self.file:WriteInt(0);
+			-- nOffsetPivot
+			self.file:WriteInt(self.offset);
+			self:AddFileOffset(4*3);
+			-- self:Write3DVector(bone.pivot, true);
+
 			if i < nbones then
 				self:WriteToken("<int_list>");
 				self.file:WriteInt(28);
@@ -495,7 +514,7 @@ function ParaXWriter:WriteRawData()
 
 	self:WriteToken("<int_list>");
 
-	local count = self.data_length / 4;
+	local count = math.floor(self.data_length / 4) + 1;
 	self.file:WriteInt(count + 1);
 	self.file:WriteInt(count);
 
@@ -537,8 +556,22 @@ function ParaXWriter:WriteRawData()
 		self:WriteAnimationBlockRawData(bone.translation);
 		self:WriteAnimationBlockRawData(bone.rotation);
 		self:WriteAnimationBlockRawData(bone.scaling);
+
+		-- name raw
+		local bone_name = frameNode.bone_name or "";
+		if(bone_name ~= "") then
+			self.file:WriteString(bone_name, #bone_name+1);
+		end
+
+		-- pivot raw
+		self:Write3DVector(bone.pivot, false);
 	end
 	
+	-- padding the size
+	for i=1, count * 4 - self.data_length do
+		self.file:write("", 1);
+	end
+
 	self:WriteToken("}");
 end
 
