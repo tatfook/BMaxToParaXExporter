@@ -293,3 +293,11 @@ end
 function BMaxNode:IsBoneNode()
 	return false;
 end
+
+function BMaxNode:GetParent()
+	return
+end
+
+function BMaxNode:HasParent()
+	return false;
+end
