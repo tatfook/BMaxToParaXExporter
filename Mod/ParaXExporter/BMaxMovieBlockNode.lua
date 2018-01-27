@@ -86,7 +86,7 @@ function BMaxMovieBlockNode:ParseMovieInfo()
 	local commandTable = commonlib.LoadTableFromString(self.block_content[1]);
 	local command = commandTable[1];
 
-	local time = string.match(command, "/t (%d+) /end$");
+	local time = tonumber(string.match(command, "/t%s+([%d%.]+)%s+/end$") or 1000) or 1000;
 	self.movieLength = time * 1000;
 end
 
