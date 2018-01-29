@@ -524,23 +524,25 @@ function BMaxModel:CalculateLodNode(nodes, x, y, z)
 						cnt = cnt + 1;
 						local hasFind = false;
 						local myBoneIndex = myNode:GetBoneIndex();
-						local myBone = self.m_bones[myBoneIndex + 1];
+						if(myBoneIndex>=0) then
+							local myBone = self.m_bones[myBoneIndex + 1];
 
-						for k, v in pairs(boneIndices) do
-							local bone = self.m_bones[k + 1];
-							if myBoneIndex == k or bone:IsAncestorOf(myBone)then
-								boneIndices[k] = boneIndices[k] + 1;
-								hasFind = true;
-								break;
-							elseif myBone:IsAncestorOf(bone) then
-								boneIndices[k] = nil;
-								boneIndices[myBoneIndex] = v + 1;
-								hasFind = true;
-								break;
+							for k, v in pairs(boneIndices) do
+								local bone = self.m_bones[k + 1];
+								if myBoneIndex == k or bone:IsAncestorOf(myBone)then
+									boneIndices[k] = boneIndices[k] + 1;
+									hasFind = true;
+									break;
+								elseif myBone:IsAncestorOf(bone) then
+									boneIndices[k] = nil;
+									boneIndices[myBoneIndex] = v + 1;
+									hasFind = true;
+									break;
+								end
 							end
-						end
-						if not hasFind then
-							boneIndices[myBoneIndex] = 1;
+							if not hasFind then
+								boneIndices[myBoneIndex] = 1;
+							end
 						end
 
 						hasFind = false;
