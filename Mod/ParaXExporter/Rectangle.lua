@@ -48,7 +48,7 @@ Rectangle.DirectionOffsetTable = {
 
 function Rectangle:ctor()
 	self.nodes = nil;
-	self.retangleVertices = {};
+	self.rectangleVertices = {};
 end
 
 function Rectangle:init(nodes, faceIndex)
@@ -71,7 +71,7 @@ function Rectangle:UpdateNode(fromNode, toNode, index)
 end
 
 function Rectangle:GetVertices()
-	return self.retangleVertices;
+	return self.rectangleVertices;
 end
 
 function Rectangle:GetBoneIndex(index)
@@ -84,13 +84,13 @@ function Rectangle:CloneNodes()
 		local cube = self.nodes[i]:GetCube();
 		if(cube) then
 			local vertices = cube:GetVertices();
-			table.insert(self.retangleVertices, vertices[startVertex + i]);
+			table.insert(self.rectangleVertices, vertices[startVertex + i]);
 		end
 	end
 end
 
 function Rectangle:ScaleVertices(scale)
-	for _, vertice in ipairs(self.retangleVertices) do
+	for _, vertice in ipairs(self.rectangleVertices) do
 		vertice.position = vertice.position:MulByFloat(scale);
 	end
 end
