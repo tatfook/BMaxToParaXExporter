@@ -86,11 +86,11 @@ function ParaXWriter:WriteHeader()
 
 	self:WriteCharArr("para");
 
-	-- version
+	-- version: 1.0.0.1
 	self.file:WriteInt(1);
 	self.file:WriteInt(0);
 	self.file:WriteInt(0);
-	self.file:WriteInt(0);
+	self.file:WriteInt(1);
 
 	-- type 0: PARAX_MODEL_ANIMATED
 	self.file:WriteInt(4);
@@ -324,8 +324,15 @@ function ParaXWriter:WriteXGeosets()
 		self.file:WriteInt(geoset.vcount);
 		self.file:WriteInt(geoset.istart);
 		self.file:WriteInt(geoset.icount);
-		self.file:WriteInt(geoset.d3);
-		self.file:WriteInt(geoset.d4);
+
+		if(geoset.vstart > 0) then
+			-- for file version 1.0.0.1, we will also support 32bits vstart and encode them into two 16bits d3 and d4.
+			self.file:WriteInt(mathlib.bit.band(geoset.vstart, 0xffff0000));
+			self.file:WriteInt(mathlib.bit.rshift(geoset.vstart, 16));
+		else
+			self.file:WriteInt(geoset.d3);
+			self.file:WriteInt(geoset.d4);
+		end
 		self.file:WriteInt(geoset.d5);
 		self.file:WriteInt(geoset.d6);
 
@@ -354,7 +361,14 @@ function ParaXWriter:WriteXRenderPass()
 
 
 	for i, pass in ipairs(render_passes) do 
-		self.file:WriteInt(pass.indexStart);
+		if(pass.indexStart >= 0xffff) then
+			self.file:WriteInt(0xfffff);
+			-- little endian
+			pass.vertexStart = mathlib.bit.band(pass.indexStart, 0xffff0000)
+			pass.vertexEnd = mathlib.bit.rshift(pass.indexStart, 16)
+		else
+			self.file:WriteInt(pass.indexStart);
+		end
 		self.file:WriteInt(pass.indexCount);
 		self.file:WriteInt(pass.vertexStart);
 		self.file:WriteInt(pass.vertexEnd);
