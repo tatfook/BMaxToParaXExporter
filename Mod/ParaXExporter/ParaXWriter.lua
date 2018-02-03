@@ -327,7 +327,7 @@ function ParaXWriter:WriteXGeosets()
 
 		if(geoset.vstart > 0) then
 			-- for file version 1.0.0.1, we will also support 32bits vstart and encode them into two 16bits d3 and d4.
-			self.file:WriteInt(mathlib.bit.band(geoset.vstart, 0xffff0000));
+			self.file:WriteInt(mathlib.bit.band(geoset.vstart, 0x0000ffff));
 			self.file:WriteInt(mathlib.bit.rshift(geoset.vstart, 16));
 		else
 			self.file:WriteInt(geoset.d3);
@@ -364,7 +364,7 @@ function ParaXWriter:WriteXRenderPass()
 		if(pass.indexStart >= 0xffff) then
 			self.file:WriteInt(0xffff);
 			-- little endian
-			pass.vertexStart = mathlib.bit.band(pass.indexStart, 0xffff0000)
+			pass.vertexStart = mathlib.bit.band(pass.indexStart, 0x0000ffff)
 			pass.vertexEnd = mathlib.bit.rshift(pass.indexStart, 16)
 		else
 			self.file:WriteInt(pass.indexStart);
