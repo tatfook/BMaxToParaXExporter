@@ -362,7 +362,7 @@ function ParaXWriter:WriteXRenderPass()
 
 	for i, pass in ipairs(render_passes) do 
 		if(pass.indexStart >= 0xffff) then
-			self.file:WriteInt(0xfffff);
+			self.file:WriteInt(0xffff);
 			-- little endian
 			pass.vertexStart = mathlib.bit.band(pass.indexStart, 0xffff0000)
 			pass.vertexEnd = mathlib.bit.rshift(pass.indexStart, 16)
