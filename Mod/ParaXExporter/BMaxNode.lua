@@ -283,7 +283,7 @@ function BMaxNode:SetBoneIndex(bone_index)
 end
 
 function BMaxNode:GetIndex()
-	return self.x + lshift(self.z, 8) + lshift(self.y, 16);
+	return self.y*900000000+self.x*30000+self.z;
 end
 
 function BMaxNode:ToBoneNode()

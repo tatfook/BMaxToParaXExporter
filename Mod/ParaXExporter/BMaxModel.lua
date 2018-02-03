@@ -257,10 +257,9 @@ end
 
 function BMaxModel:GetNode(x,y,z)
 	local index = self:GetNodeIndex(x,y,z);
-	if(not index)then
-		return nil;
+	if(index)then
+		return self.m_nodes[index];
 	end
-	return self.m_nodes[index];
 end
 
 function BMaxModel:GetFrameNode(x, y, z)
@@ -272,10 +271,9 @@ function BMaxModel:GetFrameNode(x, y, z)
 end
 
 function BMaxModel:GetNodeIndex(x,y,z)
-	if(x < 0 or y < 0 or z < 0)then
-		return
+	if(x >= 0 and y >= 0 and z >= 0)then
+		return y*900000000+x*30000+z;
 	end
-	return x + lshift(z, 8) + lshift(y, 16);
 end
 
 function BMaxModel:CalculateAABB(nodes)
