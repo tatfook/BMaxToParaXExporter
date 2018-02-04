@@ -5,9 +5,8 @@ Date: 2015/12/4
 Desc: a single bmax cube node
 use the lib:
 ------------------------------------------------------------
-NPL.load("(gl)Mod/STLExporter/BMaxNode.lua");
-local BMaxNode = commonlib.gettable("Mod.STLExporter.BMaxNode");
-local node = BMaxNode:new();
+NPL.load("(gl)Mod/ParaXExporter/BMaxNode.lua");
+local ParaXExporter = commonlib.gettable("Mod.ParaXExporter.BMaxNode");
 ------------------------------------------------------------
 ]]
 
@@ -44,7 +43,15 @@ function BMaxNode:init(model, x, y, z, template_id, block_data, block_content)
 	self.template_id = template_id;
 	self.block_data = block_data;
 	self.block_content = block_content;
+	local blocktemplate = block_types.get(template_id);
+	if(blocktemplate) then
+		self.solid = blocktemplate.solid;
+	end
 	return self;
+end
+
+function BMaxNode:IsSolid()
+	return self.solid;
 end
 
 function BMaxNode:UpdatePosition(x, y, z)
@@ -70,6 +77,19 @@ end
 
 local names = commonlib.gettable("MyCompany.Aries.Game.block_types.names")
 
+
+local neighborBlocks = {};
+
+-- create a new cube from this node.
+function BMaxNode:CreateCube()
+	local cube = BlockModel:new():InitCube();
+	local dx = self.x - self.model.m_centerPos[1];
+	local dy = self.y - self.model.m_centerPos[2];
+	local dz = self.z - self.model.m_centerPos[3];
+	cube:OffsetPosition(dx,dy,dz);
+	return cube;
+end
+
 function BMaxNode:TessellateBlock()
 	local block_template = block_types.get(self.template_id);
 
@@ -78,30 +98,23 @@ function BMaxNode:TessellateBlock()
 		return;
 	end
 
-	local cube = BlockModel:new();
 	local nNearbyBlockCount = 27;
-	local neighborBlocks = {};
 	neighborBlocks[BlockCommon.rbp_center] = self;
-
 	self:QueryNeighborBlockData(neighborBlocks, 1, nNearbyBlockCount - 1);
-	local cube = BlockModel:new():InitCube();
-	local dx = self.x - self.model.m_centerPos[1];
-	local dy = self.y - self.model.m_centerPos[2];
-	local dz = self.z - self.model.m_centerPos[3];
-	cube:OffsetPosition(dx,dy,dz);
+	
+	local cube;
+	local aoFlags;
+	local color;
 
-	local aoFlags = self:CalculateCubeAO(neighborBlocks);
-
-	local color = self:GetColor();
 	for face = 0, 5 do
 		local nFirstVertex = face * 4;
-
 		local pCurBlock = neighborBlocks[BlockCommon.RBP_SixNeighbors[face]];
-		--[[if #self.model.m_nodeIndexes == 1588 and self.x == 19 and self.y == 1 and self.z == 1 then
-			print("node0", self.x, self.y, self.z, face, pCurBlock);
-		end--]]
 			
-		if(not pCurBlock or (pCurBlock:GetBoneIndex() ~= self.bone_index) or not pCurBlock.solid) then
+		if(not pCurBlock or (pCurBlock:GetBoneIndex() ~= self.bone_index) or not pCurBlock:IsSolid()) then
+			cube = cube or self:CreateCube();
+			color = color or self:GetColor();
+			aoFlags = aoFlags or self:CalculateCubeAO(neighborBlocks);
+
 			for v = 0, 3 do
 				local i = nFirstVertex + v;
 				--local nIndex = cube:AddVertex(temp_cube, i);
@@ -120,11 +133,11 @@ function BMaxNode:TessellateBlock()
 				end
 			end
 			
-			cube:SetFaceVisiable(face);
+			cube:SetFaceVisible(face);
 		end
 	end
 
-	if(cube:GetVerticesCount() > 0)then
+	if(cube and cube:GetVerticesCount() > 0)then
 		self.block_model = cube;
 	end
 end

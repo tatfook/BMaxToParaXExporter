@@ -183,7 +183,7 @@ function BlockModel:AddVertex(from_block, nVertexIndex)
 	return #self.m_vertices - 1;
 end
 
-function BlockModel:SetFaceVisiable(index)
+function BlockModel:SetFaceVisible(index)
 	self.faces[index + 1] = BlockModel.FaceVisiableNotSign;
 end
 

@@ -716,7 +716,7 @@ function BMaxModel:FillVerticesAndIndices(rectangles)
 		local vertices = rectangle:GetVertices();
 		
 
-		if nIndexCount + geoset:GetIndexCount() >= 0xffff then
+		if (nIndexCount + geoset:GetIndexCount()) >= 0xffff then
 			nStartIndex = #self.m_indices;
 			geoset = self:AddGeoset();
 			pass = self:AddRenderPass();
@@ -727,7 +727,6 @@ function BMaxModel:FillVerticesAndIndices(rectangles)
 			nStartVertex = 0; 
 		end
 
-		geoset.vstart = geoset.vstart + nVertices;
 		geoset.icount = geoset.icount+ nIndexCount;
 		pass.indexCount = pass.indexCount + nIndexCount;
 
