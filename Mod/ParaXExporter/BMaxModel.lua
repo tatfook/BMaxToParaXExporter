@@ -940,7 +940,7 @@ function BMaxModel:AddBoneAnimation(startTime, endTime, anim_data)
 			frameNode:GenerateStartFrame(startTime);
 		end
 		for k, v in pairs(anim_data) do
-			if string.find(k, "bone") == 1 then
+			if (type(v) == "table") then
 				local name = v.name;
 				if name then
 					local frameNode, anim = self:GetBone(name);
