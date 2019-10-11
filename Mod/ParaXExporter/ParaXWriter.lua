@@ -28,7 +28,7 @@ function ParaXWriter:ctor()
 	self.model = nil;
 end
 
-function ParaXWriter:SaveAsBinary(output_file_name)
+function ParaXWriter:SaveAsBinary(output_file_name, useTextures)
 
 	if(not self:IsValid()) then
 		return false;
@@ -38,7 +38,7 @@ function ParaXWriter:SaveAsBinary(output_file_name)
 
 	self.file = ParaIO.open(output_file_name, "w");
 	self:WriteTemplate();
-	self:WriteHeader();
+	self:WriteHeader(useTextures);
 	self:WriteBody();
 	self:WriteXDWordArray();
 	LOG.std(nil, "info", "ParaXWriter", "file written to %s with %d bytes", output_file_name, self.data_length);
@@ -70,7 +70,7 @@ function ParaXWriter:WriteTemplate()
 
 end
 
-function ParaXWriter:WriteHeader()
+function ParaXWriter:WriteHeader(useTextures)
 
 	--local actor = self.model.m_movie_blocks[1].m_actors[3];
 
@@ -93,7 +93,11 @@ function ParaXWriter:WriteHeader()
 	self.file:WriteInt(1);
 
 	-- type 0: PARAX_MODEL_ANIMATED
-	self.file:WriteInt(4);
+	if (useTextures) then
+		self.file:WriteInt(0);
+	else
+		self.file:WriteInt(4);
+	end
 
 	-- isAnimated 5: not understand(AnimationBitwise;# boolean animBones,animTextures)
 	if self.model.bHasBoneBlock then
@@ -171,6 +175,7 @@ function ParaXWriter:WriteXViews()
 end
 
 function ParaXWriter:WriteXTextures()
+	local textures = self.model.m_textures;
 
 	self:WriteName("XTextures");
 	self:WriteToken("{");
@@ -181,9 +186,13 @@ function ParaXWriter:WriteXTextures()
 	-- 1 xtextures + 1 x (1 type + 1 flags) = 3
 	self.file:WriteInt(3);
 
-	local XTexturesCount = 1;
+	local XTexturesCount = #textures;
 	self.file:WriteInt(XTexturesCount);
 	for i = 1, XTexturesCount do 
+		if(i ~= 1) then
+			self:WriteToken("<int_list>");
+			self.file:WriteInt(2);
+		end
 
 		--[[/** old texture definition for md2 file*/
 		struct ModelTextureDef {
@@ -197,7 +206,8 @@ function ParaXWriter:WriteXTextures()
 		self.file:WriteInt(0);
 		-- XTexturesFlag default 0
 		self.file:WriteInt(0);
-		self:WriteString("Texture/blocks/snow.png");
+		--self:WriteString("Texture/blocks/snow.png");
+		self:WriteString(textures[i]);
 	end
 
 	
@@ -618,7 +628,7 @@ end
 function ParaXWriter:WriteCharArr(char_str)
 	for i = 1, string.len(char_str) do
 	   local number = string.byte(string.sub(char_str, i, i));
-       self.file:WriteInt(number);
+	   self.file:WriteInt(number);
 	end
 	
 end

@@ -12,6 +12,7 @@ local node = BlockModel:new();
 ]]
 NPL.load("(gl)script/ide/math/vector.lua");
 local vector3d = commonlib.gettable("mathlib.vector3d");
+local vector2d = commonlib.gettable("mathlib.vector2d");
 local BlockModel = commonlib.inherit(nil,commonlib.gettable("Mod.ParaXExporter.BlockModel"));
 local bor = mathlib.bit.bor;
 local band = mathlib.bit.band;
@@ -78,8 +79,8 @@ function BlockModel:ctor()
 end
 
 -- init the model as a cube
-function BlockModel:InitCube()
-	self:MakeCube();
+function BlockModel:InitCube(texFaceNum)
+	self:MakeCube(texFaceNum);
 	return self;
 end
 
@@ -95,7 +96,7 @@ end
 
 
 -- make this block model as a cube 
-function BlockModel:MakeCube()
+function BlockModel:MakeCube(texFaceNum)
 	local vertices = self.m_vertices;
 
 	for i=1, 24 do
@@ -166,6 +167,128 @@ function BlockModel:MakeCube()
 	vertices[22].normal = vector3d:new({0,0,1});
 	vertices[23].normal = vector3d:new({0,0,1});
 	vertices[24].normal = vector3d:new({0,0,1}); 
+
+	if (texFaceNum == 3) then
+		vertices[1].uv = vector2d:new(0, 0.5);
+		vertices[2].uv = vector2d:new(0, 0);
+		vertices[3].uv = vector2d:new(0.5, 0);
+		vertices[4].uv = vector2d:new(0.5, 0.5);
+
+		vertices[5].uv = vector2d:new(0, 1);
+		vertices[6].uv = vector2d:new(0, 0.5);
+		vertices[7].uv = vector2d:new(0.5, 0.5);
+		vertices[8].uv = vector2d:new(0.5, 1);
+
+		vertices[9].uv = vector2d:new(0.5, 0.5);
+		vertices[10].uv = vector2d:new(0.5, 0);
+		vertices[11].uv = vector2d:new(1, 0);
+		vertices[12].uv = vector2d:new(1, 0.5);
+
+		vertices[13].uv = vector2d:new(0, 1);
+		vertices[14].uv = vector2d:new(0, 0.5);
+		vertices[15].uv = vector2d:new(0.5, 0.5);
+		vertices[16].uv = vector2d:new(0.5, 1);
+
+		vertices[17].uv = vector2d:new(0, 1);
+		vertices[18].uv = vector2d:new(0, 0.5);
+		vertices[19].uv = vector2d:new(0.5, 0.5);
+		vertices[20].uv = vector2d:new(0.5, 1);
+
+		vertices[21].uv = vector2d:new(0, 1);
+		vertices[22].uv = vector2d:new(0, 0.5);
+		vertices[23].uv = vector2d:new(0.5, 0.5);
+		vertices[24].uv = vector2d:new(0.5, 1);
+	elseif (texFaceNum == 4) then
+		vertices[1].uv = vector2d:new(0, 0.5);
+		vertices[2].uv = vector2d:new(0, 0);
+		vertices[3].uv = vector2d:new(0.5, 0);
+		vertices[4].uv = vector2d:new(0.5, 0.5);
+
+		vertices[5].uv = vector2d:new(0, 1);
+		vertices[6].uv = vector2d:new(0, 0.5);
+		vertices[7].uv = vector2d:new(0.5, 0.5);
+		vertices[8].uv = vector2d:new(0.5, 1);
+
+		vertices[9].uv = vector2d:new(0.5, 0.5);
+		vertices[10].uv = vector2d:new(0.5, 0);
+		vertices[11].uv = vector2d:new(1, 0);
+		vertices[12].uv = vector2d:new(1, 0.5);
+
+		vertices[13].uv = vector2d:new(0.5, 1);
+		vertices[14].uv = vector2d:new(0.5, 0.5);
+		vertices[15].uv = vector2d:new(1, 0.5);
+		vertices[16].uv = vector2d:new(1, 1);
+
+		vertices[17].uv = vector2d:new(0.5, 1);
+		vertices[18].uv = vector2d:new(0.5, 0.5);
+		vertices[19].uv = vector2d:new(1, 0.5);
+		vertices[20].uv = vector2d:new(1, 1);
+
+		vertices[21].uv = vector2d:new(0, 1);
+		vertices[22].uv = vector2d:new(0, 0.5);
+		vertices[23].uv = vector2d:new(0.5, 0.5);
+		vertices[24].uv = vector2d:new(0.5, 1);
+	elseif (texFaceNum == 6) then
+		vertices[1].uv = vector2d:new(0.5, 0);
+		vertices[2].uv = vector2d:new(0.5, 0);
+		vertices[3].uv = vector2d:new(0.375, 0);
+		vertices[4].uv = vector2d:new(0.375, 1);
+
+		vertices[5].uv = vector2d:new(0.5, 1);
+		vertices[6].uv = vector2d:new(0.5, 0);
+		vertices[7].uv = vector2d:new(0.375, 0);
+		vertices[8].uv = vector2d:new(0.375, 1);
+
+		vertices[9].uv = vector2d:new(0.625, 0);
+		vertices[10].uv = vector2d:new(0.625, 1);
+		vertices[11].uv = vector2d:new(0.75, 1);
+		vertices[12].uv = vector2d:new(0.75, 0);
+
+		vertices[13].uv = vector2d:new(0.125, 1);
+		vertices[14].uv = vector2d:new(0.125, 0);
+		vertices[15].uv = vector2d:new(0, 0);
+		vertices[16].uv = vector2d:new(0, 1);
+
+		vertices[17].uv = vector2d:new(0.375, 1);
+		vertices[18].uv = vector2d:new(0.375, 0);
+		vertices[19].uv = vector2d:new(0.25, 0);
+		vertices[20].uv = vector2d:new(0.25, 1);
+
+		vertices[21].uv = vector2d:new(0.25, 1);
+		vertices[22].uv = vector2d:new(0.25, 0);
+		vertices[23].uv = vector2d:new(0.125, 0);
+		vertices[24].uv = vector2d:new(0.125, 1);
+	else
+		vertices[1].uv = vector2d:new(0, 1);
+		vertices[2].uv = vector2d:new(0, 0);
+		vertices[3].uv = vector2d:new(1, 0);
+		vertices[4].uv = vector2d:new(1, 1);
+
+		vertices[5].uv = vector2d:new(0, 1);
+		vertices[6].uv = vector2d:new(0, 0);
+		vertices[7].uv = vector2d:new(1, 0);
+		vertices[8].uv = vector2d:new(1, 1);
+
+		vertices[9].uv = vector2d:new(0, 1);
+		vertices[10].uv = vector2d:new(0, 0);
+		vertices[11].uv = vector2d:new(1, 0);
+		vertices[12].uv = vector2d:new(1, 1);
+
+		vertices[13].uv = vector2d:new(0, 1);
+		vertices[14].uv = vector2d:new(0, 0);
+		vertices[15].uv = vector2d:new(1, 0);
+		vertices[16].uv = vector2d:new(1, 1);
+
+		vertices[17].uv = vector2d:new(0, 1);
+		vertices[18].uv = vector2d:new(0, 0);
+		vertices[19].uv = vector2d:new(1, 0);
+		vertices[20].uv = vector2d:new(1, 1);
+
+		vertices[21].uv = vector2d:new(0, 1);
+		vertices[22].uv = vector2d:new(0, 0);
+		vertices[23].uv = vector2d:new(1, 0);
+		vertices[24].uv = vector2d:new(1, 1);
+	end
 end
 
 function BlockModel:OffsetPosition(dx, dy, dz)

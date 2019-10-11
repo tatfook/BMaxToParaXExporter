@@ -30,6 +30,7 @@ local BMaxNode = commonlib.inherit(nil,commonlib.gettable("Mod.ParaXExporter.BMa
 function BMaxNode:ctor()
 	self.neighborBlocks = {};
 	self.m_color = -1;
+	self.texFaceNum = 0;
 
 	self.bone_index = -1;
 	self.block_model = nil;
@@ -46,6 +47,15 @@ function BMaxNode:init(model, x, y, z, template_id, block_data, block_content)
 	local blocktemplate = block_types.get(template_id);
 	if(blocktemplate) then
 		self.solid = blocktemplate.solid;
+		self.id = blocktemplate.id;
+		self.texture = blocktemplate.texture;
+		if (blocktemplate.threeSideTex) then
+			self.texFaceNum = 3;
+		elseif (blocktemplate.fourSideTex) then
+			self.texFaceNum = 4;
+		elseif (blocktemplate.sixSideTex) then
+			self.texFaceNum = 6;
+		end
 	end
 	return self;
 end
@@ -82,7 +92,7 @@ local neighborBlocks = {};
 
 -- create a new cube from this node.
 function BMaxNode:CreateCube()
-	local cube = BlockModel:new():InitCube();
+	local cube = BlockModel:new():InitCube(self.texFaceNum);
 	local dx = self.x - self.model.m_centerPos[1];
 	local dy = self.y - self.model.m_centerPos[2];
 	local dz = self.z - self.model.m_centerPos[3];

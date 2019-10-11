@@ -111,14 +111,14 @@ end
 
 -- @param input_file: *.bmax file name
 -- @param output_file: *.x fileame
-function ParaXExporter:ConvertFromBMaxToParaX(input_file, output_file)
-	self:Export(input_file, output_file);
+function ParaXExporter:ConvertFromBMaxToParaX(input_file, output_file, useTextures)
+	self:Export(input_file, output_file, useTextures);
 end
 
 -- @param input_file_name: file name. if it is *.bmax, we will convert this file and save output to *.x file.
 -- if it is not, we will convert current selection to *.x files. 
 -- @param output_file_name: this should be nil, unless you explicitly specify an output name.
-function ParaXExporter:Export(input_file_name, output_file_name)
+function ParaXExporter:Export(input_file_name, output_file_name, useTextures)
 	local name, extension;
 	if( input_file_name ) then
 		 name, extension = string.match(input_file_name,"(.+)%.(%w+)$");
@@ -137,6 +137,7 @@ function ParaXExporter:Export(input_file_name, output_file_name)
 	end
 
 	local model = BMaxModel:new();
+	model:UseTextures(useTextures);
 	local isValid = true;
 	if(extension == "bmax") then
 		if ParaIO.DoesFileExist(input_file_name) then
@@ -192,7 +193,7 @@ function ParaXExporter:Export(input_file_name, output_file_name)
 		local originRectangles = actor_model.m_originRectangles;
 		if originRectangles then
 			actor_model:FillVerticesAndIndices(originRectangles);
-			self:WriteParaXFile(actor_model, output_file_name, 0);
+			self:WriteParaXFile(actor_model, output_file_name, 0, useTextures);
 			boundingMin = actor_model:GetMinExtent();
 			boundindMax = actor_model:GetMaxExtent();
 		end
@@ -202,7 +203,7 @@ function ParaXExporter:Export(input_file_name, output_file_name)
 		if lodRectangles then
 			for index, retangle in ipairs(lodRectangles) do
 				actor_model:FillVerticesAndIndices(retangle);
-				self:WriteParaXFile(actor_model, output_file_name, BMaxModel.LodIndexToMeter[index+1]);
+				self:WriteParaXFile(actor_model, output_file_name, BMaxModel.LodIndexToMeter[index+1], useTextures);
 			end
 		end
 
@@ -241,7 +242,7 @@ function ParaXExporter:WriteXMLFile(filename, root_node)
 		end
 end
 
-function ParaXExporter:WriteParaXFile(model, output_file_name, meter)
+function ParaXExporter:WriteParaXFile(model, output_file_name, meter, useTextures)
 	if meter > 0 then 
 		output_file_name = output_file_name.."_LOD"..meter..".x";
 		table.insert(self.lodFiles, {m = meter, filename = string.match(output_file_name, ".+/([^/]*%.%w+)$")});
@@ -252,7 +253,7 @@ function ParaXExporter:WriteParaXFile(model, output_file_name, meter)
 
 	local writer = ParaXWriter:new();
 	writer:LoadModel(model);
-	local res = writer:SaveAsBinary(output_file_name);
+	local res = writer:SaveAsBinary(output_file_name, useTextures);
 	if res then 
 		--[[_guihelper.MessageBox(format("Successfully saved ParaX file to :%s, do you want to open it?", commonlib.Encoding.DefaultToUtf8(output_file_name)), function(res)
 			if(res and res == _guihelper.DialogResult.Yes) then

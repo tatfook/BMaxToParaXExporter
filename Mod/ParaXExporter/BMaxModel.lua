@@ -57,6 +57,8 @@ local BMaxModel = commonlib.inherit(nil,commonlib.gettable("Mod.ParaXExporter.BM
 BMaxModel.m_maxSize = 1.0;
 BMaxModel.m_bAutoScale = true;
 
+BMaxModel.useTextures = false;
+
 BMaxModel.MaxBoneLengthHorizontal = 50;
 BMaxModel.MaxBoneLengthVertical = 100;
 
@@ -89,6 +91,7 @@ function BMaxModel:ctor()
 	self.m_geosets = {};
 	self.m_bones = {};
 	self.m_renderPasses = {};
+	self.m_textures = {};
 	self.m_indices = {};
 	self.m_vertices = {};
 	self.m_animations = {};
@@ -105,6 +108,12 @@ end
 -- whether we will resize the model to self:GetMaxModelSize();
 function BMaxModel:EnableAutoScale(bEnable)
 	self.m_bAutoScale = bEnable;
+end
+
+function BMaxModel:UseTextures(use)
+	if (use) then
+		self.useTextures = use;
+	end
 end
 
 function BMaxModel:GetMaxModelSize()
@@ -444,7 +453,9 @@ function BMaxModel:FindCoplanerFace(rectangles, node, faceIndex)
 	local rectangle = Rectangle:new():init(nodes, faceIndex);
 	if rectangle then 
 		for i = 0, 3 do
-			self:FindNeighbourFace(rectangle, i, faceIndex);
+			if (not self.useTextures) then
+				self:FindNeighbourFace(rectangle, i, faceIndex);
+			end
 			local cube = node:GetCube();
 			if(cube) then
 				cube:SetFaceUsed(faceIndex);	
@@ -696,14 +707,21 @@ function BMaxModel:ClearXModel()
 	self.m_indices = {};
 	self.m_vertices = {};
 	self.m_renderPasses = {};
+	self.m_textures = {};
 end
 
 function BMaxModel:FillVerticesAndIndices(rectangles)	
+	if (self.useTextures) then
+		self:FillVerticesAndIndices2(rectangles);
+		return;
+	end
+
 	self:ClearXModel();
 	local aabb = ShapeAABB:new();
 	local geoset = self:AddGeoset();
 	local pass = self:AddRenderPass();
 	pass:SetGeoset(geoset.id);
+	table.insert(self.m_textures, "Texture/blocks/snow.png");
 
 	local nStartIndex = 0;
 	local total_count = 0;
@@ -828,6 +846,93 @@ function BMaxModel:FillVerticesAndIndices(rectangles)
 	--self.m_minExtent = aabb:GetMin();
 	--self.m_maxExtent = aabb:GetMax();
 	--print("m_minExtent", self.m_minExtent[1], self.m_minExtent[2], self.m_minExtent[3], self.m_maxExtent[1], self.m_maxExtent[2], self.m_maxExtent[3]);
+end	
+
+-- use textures
+function BMaxModel:FillVerticesAndIndices2(rectangles)	
+	self:ClearXModel();
+	local aabb = ShapeAABB:new();
+
+	local nStartIndex = 0;
+	local total_count = 0;
+	local nStartVertex = 0;
+	local rootBoneIndex = self:FindRootBoneIndex(); 
+
+	local blocks = {}
+	local mapRectangles = {};
+	for i, rectangle in ipairs(rectangles) do
+		local id = rectangle.nodes[1].id;
+		if (mapRectangles[id] == nil) then
+			local texture = rectangle.nodes[1].texture;
+			mapRectangles[id] = {};
+			table.insert(blocks, {id = id, texture = texture});
+		end
+		table.insert(mapRectangles[id], rectangle);
+	end
+	for index, block in ipairs(blocks) do
+		table.insert(self.m_textures, block.texture);
+		nStartIndex = #self.m_indices;
+		local geoset = self:AddGeoset();
+		local pass = self:AddRenderPass();
+		pass:SetGeoset(geoset.id);
+		pass:SetStartIndex(nStartIndex);
+		geoset:SetVertexStart(total_count);
+		nStartVertex = 0; 
+
+		for _, rectangle in ipairs(mapRectangles[block.id]) do
+			local nIndexCount = 6;
+			local nVertices = 4;
+			local vertices = rectangle:GetVertices();
+
+			if (nIndexCount + geoset:GetIndexCount()) >= 0xffff then
+				nStartIndex = #self.m_indices;
+				geoset = self:AddGeoset();
+				pass = self:AddRenderPass();
+		
+				pass:SetGeoset(geoset.id);
+				pass:SetStartIndex(nStartIndex);
+				geoset:SetVertexStart(total_count);
+				nStartVertex = 0; 
+			end
+
+			geoset.icount = geoset.icount+ nIndexCount;
+			pass.indexCount = pass.indexCount + nIndexCount;
+			pass.tex = index - 1;
+
+			local vertex_weight = 255;
+
+			for i, vertice in ipairs(vertices) do
+				local modelVertex = ModelVertice:new();
+				modelVertex.pos = vertice.position;
+				modelVertex.normal = vertice.normal;
+				modelVertex.color0 = vertice.color2;
+				modelVertex.texcoords[1] = vertice.uv[1];
+				modelVertex.texcoords[2] = vertice.uv[2];
+				modelVertex.weights[1] = vertex_weight;
+				if rectangle:GetBoneIndex(i) == -1 then
+					modelVertex.bones[1] = rootBoneIndex;
+				else
+					modelVertex.bones[1] = rectangle:GetBoneIndex(i);
+				end
+				table.insert(self.m_vertices, modelVertex);
+				aabb:Extend(modelVertex.pos);
+			end 
+
+			local start_index = nStartVertex;
+			table.insert(self.m_indices, start_index + 0);
+			table.insert(self.m_indices, start_index + 1);
+			table.insert(self.m_indices, start_index + 2);
+			table.insert(self.m_indices, start_index + 0);
+			table.insert(self.m_indices, start_index + 2);
+			table.insert(self.m_indices, start_index + 3);
+
+			total_count = total_count + nVertices;
+			nStartVertex = nStartVertex + nVertices;
+		end
+	end
+
+	self.m_minExtent = aabb:GetMin();
+	self.m_maxExtent = aabb:GetMax();
 end	
 
 function BMaxModel:ParseMovieBlocks()
