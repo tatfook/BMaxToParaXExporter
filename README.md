@@ -19,6 +19,11 @@ ParaX 3D模型导出 是[paracraft](http://paracraft.cn/)的Mod插件。 目的�
 NPL.load("(gl)Mod/ParaXExporter/main.lua");
 local ParaXExporter = commonlib.gettable("Mod.ParaXExporter");
 ParaXExporter:ConvertFromBMaxToParaX("Mod/ParaXExporter/test/input.bmax", "temp/output.x");
+
+-- export to ParaX with textures
+ParaXExporter:ConvertFromBMaxToParaX("Mod/ParaXExporter/test/input.bmax", "temp/output.x", true);
+-- or
+ParaXExporter:Export("Mod/ParaXExporter/test/input.bmax", "temp/output.x", true);
 ```
 
 Reference:
