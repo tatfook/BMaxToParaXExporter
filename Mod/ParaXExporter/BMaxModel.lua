@@ -857,7 +857,6 @@ function BMaxModel:FillVerticesAndIndices2(rectangles)
 
 	local nStartIndex = 0;
 	local total_count = 0;
-	local nStartVertex = 0;
 	local rootBoneIndex = self:FindRootBoneIndex(); 
 
 	local blocks = {}
@@ -871,15 +870,14 @@ function BMaxModel:FillVerticesAndIndices2(rectangles)
 		end
 		table.insert(mapRectangles[id], rectangle);
 	end
+
+	local geoset = self:AddGeoset();
 	for index, block in ipairs(blocks) do
 		table.insert(self.m_textures, block.texture);
 		nStartIndex = #self.m_indices;
-		local geoset = self:AddGeoset();
 		local pass = self:AddRenderPass();
 		pass:SetGeoset(geoset.id);
 		pass:SetStartIndex(nStartIndex);
-		geoset:SetVertexStart(total_count);
-		nStartVertex = 0; 
 
 		for _, rectangle in ipairs(mapRectangles[block.id]) do
 			local nIndexCount = 6;
@@ -888,16 +886,14 @@ function BMaxModel:FillVerticesAndIndices2(rectangles)
 
 			if (nIndexCount + geoset:GetIndexCount()) >= 0xffff then
 				nStartIndex = #self.m_indices;
-				geoset = self:AddGeoset();
 				pass = self:AddRenderPass();
 		
 				pass:SetGeoset(geoset.id);
 				pass:SetStartIndex(nStartIndex);
-				geoset:SetVertexStart(total_count);
-				nStartVertex = 0; 
 			end
 
-			geoset.icount = geoset.icount+ nIndexCount;
+			geoset.icount = geoset.icount + nIndexCount;
+			geoset.vcount = geoset.vcount + nVertices;
 			pass.indexCount = pass.indexCount + nIndexCount;
 			pass.tex = index - 1;
 
@@ -920,7 +916,7 @@ function BMaxModel:FillVerticesAndIndices2(rectangles)
 				aabb:Extend(modelVertex.pos);
 			end 
 
-			local start_index = nStartVertex;
+			local start_index = total_count;
 			table.insert(self.m_indices, start_index + 0);
 			table.insert(self.m_indices, start_index + 1);
 			table.insert(self.m_indices, start_index + 2);
@@ -929,7 +925,6 @@ function BMaxModel:FillVerticesAndIndices2(rectangles)
 			table.insert(self.m_indices, start_index + 3);
 
 			total_count = total_count + nVertices;
-			nStartVertex = nStartVertex + nVertices;
 		end
 	end
 
