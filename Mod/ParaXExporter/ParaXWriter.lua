@@ -28,6 +28,60 @@ function ParaXWriter:ctor()
 	self.model = nil;
 end
 
+function ParaXWriter.save_to_file(asset_file_name,output_root_folder)
+	local content;
+	local file = ParaIO.OpenAssetFile(asset_file_name);
+	if(file:IsValid()) then	
+		content = file:GetText(0, -1);
+		file:close();
+	end
+	local filename = string.format("%s/%s",output_root_folder,asset_file_name);
+	if(content)then
+		ParaIO.CreateDirectory(filename);
+		local file = ParaIO.open(filename, "w");
+		if(file:IsValid()) then	
+			file:WriteString(content,#content);
+			file:close();
+		end
+	end
+	return filename;
+end
+
+function ParaXWriter.copyFiles(input_files,output_root_folder)
+	if(not input_files)then
+		return
+	end
+	local result = {};
+	for k,v in ipairs(input_files) do
+		local filename = ParaXWriter.save_to_file(v,output_root_folder)
+		table.insert(result,filename);
+	end
+	return result;
+end
+
+function ParaXWriter.loadAssetFile(asset_file_name,callback)
+	LOG.std(nil,"info","ParaXWriter.loadAssetFile", asset_file_name);
+	NPL.load("(gl)script/ide/AssetPreloader.lua");
+	local loader = commonlib.AssetPreloader:new({
+		callbackFunc = function(nItemsLeft, loader)
+			if(nItemsLeft <= 0) then
+				if(callback)then
+					callback();
+				end
+			end
+		end
+	});
+	loader:AddAssets(asset_file_name);
+	loader:Start();
+end
+
+function ParaXWriter:SaveTextures(output_root_folder)
+	ParaAsset.SetAssetServerUrl("http://cdn.keepwork.com/update61/assetdownload/update/");
+	ParaXWriter.loadAssetFile(self.model.m_textures, function()
+		ParaXWriter.copyFiles(self.model.m_textures, output_root_folder);
+	end);
+end
+
 function ParaXWriter:SaveAsBinary(output_file_name, useTextures)
 
 	if(not self:IsValid()) then
@@ -43,6 +97,11 @@ function ParaXWriter:SaveAsBinary(output_file_name, useTextures)
 	self:WriteXDWordArray();
 	LOG.std(nil, "info", "ParaXWriter", "file written to %s with %d bytes", output_file_name, self.data_length);
 	self.file:close();
+
+	if (useTextures) then
+		local output_root_folder = ParaIO.GetParentDirectoryFromPath(output_file_name, 0);
+		self:SaveTextures(output_root_folder);
+	end
 	return true;
 	
 end
@@ -210,7 +269,6 @@ function ParaXWriter:WriteXTextures()
 		self:WriteString(textures[i]);
 	end
 
-	
 	self:WriteToken("}");
 end
 
