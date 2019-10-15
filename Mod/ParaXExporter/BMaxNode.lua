@@ -47,7 +47,6 @@ function BMaxNode:init(model, x, y, z, template_id, block_data, block_content)
 	local blocktemplate = block_types.get(template_id);
 	if(blocktemplate) then
 		self.solid = blocktemplate.solid;
-		self.id = blocktemplate.id;
 		self.texture = blocktemplate.texture;
 		if (blocktemplate.threeSideTex) then
 			self.texFaceNum = 3;
@@ -284,7 +283,11 @@ end
 function BMaxNode:GetColor()
 	if self.m_color == -1 then
 		local block_template = block_types.get(self.template_id);
-		self.m_color = block_template:GetBlockColorByData(self.block_data)	or 0;
+		if (block_template ~= nil) then
+			self.m_color = block_template:GetBlockColorByData(self.block_data)	or 0;
+		else
+			self.m_color = 0;
+		end
 	end
 	return self.m_color;
 end

@@ -364,17 +364,19 @@ function BMaxModel:CalculateLod()
 		rectangle:ScaleVertices(self.m_fScale);
 	end
 	
-
-	local lodTable = self:GetLodTable(#rectangles);
-	for i, nextFaceCount in ipairs(lodTable) do
-		while #rectangles > nextFaceCount do
-			self:PerformLod();
-			rectangles = self:MergeCoplanerBlockFace();
+	-- export with textures, will not calculate LOD
+	if (not self.useTextures) then
+		local lodTable = self:GetLodTable(#rectangles);
+		for i, nextFaceCount in ipairs(lodTable) do
+			while #rectangles > nextFaceCount do
+				self:PerformLod();
+				rectangles = self:MergeCoplanerBlockFace();
+			end
+			for _, rectangles in ipairs(rectangles) do
+				rectangles:ScaleVertices(self.m_fScale);
+			end
+			self.m_lodRectangles[i] = rectangles;
 		end
-		for _, rectangles in ipairs(rectangles) do
-			rectangles:ScaleVertices(self.m_fScale);
-		end
-		self.m_lodRectangles[i] = rectangles;
 	end
 end
 
@@ -861,7 +863,7 @@ function BMaxModel:FillVerticesAndIndices2(rectangles)
 	local blocks = {}
 	local mapRectangles = {};
 	for i, rectangle in ipairs(rectangles) do
-		local id = rectangle.nodes[1].id;
+		local id = rectangle.nodes[1].template_id;
 		if (mapRectangles[id] == nil) then
 			local texture = rectangle.nodes[1].texture;
 			mapRectangles[id] = {};
