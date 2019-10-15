@@ -15,6 +15,7 @@ NPL.load("(gl)Mod/ParaXExporter/BlockCommon.lua");
 NPL.load("(gl)Mod/ParaXExporter/Common.lua");
 NPL.load("(gl)script/ide/System/Core/Color.lua");
 NPL.load("(gl)Mod/ParaXExporter/BlockDirection.lua");
+NPL.load("(gl)script/apps/Aries/Creator/Game/blocks/block_types.lua");
 
 local block_types = commonlib.gettable("MyCompany.Aries.Game.block_types")
 local BlockModel = commonlib.gettable("Mod.ParaXExporter.BlockModel");

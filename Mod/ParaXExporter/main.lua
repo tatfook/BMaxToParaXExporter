@@ -111,14 +111,16 @@ end
 
 -- @param input_file: *.bmax file name
 -- @param output_file: *.x fileame
-function ParaXExporter:ConvertFromBMaxToParaX(input_file, output_file, useTextures)
-	self:Export(input_file, output_file, useTextures);
+function ParaXExporter:ConvertFromBMaxToParaX(input_file, output_file, useTextures, bForceNoScale)
+	self:Export(input_file, output_file, useTextures, bForceNoScale);
 end
 
 -- @param input_file_name: file name. if it is *.bmax, we will convert this file and save output to *.x file.
 -- if it is not, we will convert current selection to *.x files. 
 -- @param output_file_name: this should be nil, unless you explicitly specify an output name.
-function ParaXExporter:Export(input_file_name, output_file_name, useTextures)
+-- @param useTextures: true to export textures
+-- @param bForceNoScale: true to export 1:1 .x
+function ParaXExporter:Export(input_file_name, output_file_name, useTextures, bForceNoScale)
 	local name, extension;
 	if( input_file_name ) then
 		 name, extension = string.match(input_file_name,"(.+)%.(%w+)$");
@@ -142,6 +144,7 @@ function ParaXExporter:Export(input_file_name, output_file_name, useTextures)
 	if(extension == "bmax") then
 		if ParaIO.DoesFileExist(input_file_name) then
 			LOG.std(nil, "info", "ParaXExporter", "exporting from %s to %s", input_file_name, output_file_name);
+            model:EnableAutoScale(not bForceNoScale);
 			model:Load(input_file_name);
 		else 
 			isValid = false;
@@ -170,6 +173,7 @@ function ParaXExporter:Export(input_file_name, output_file_name, useTextures)
 				b[6] = b[6] or Game.BlockEngine:GetBlockEntityData(b[1], b[2], b[3]);
 			end
 			
+            model:EnableAutoScale(not bForceNoScale);
 			model:LoadFromBlocks(blocks);
 		end
 	end
@@ -223,7 +227,9 @@ function ParaXExporter:Export(input_file_name, output_file_name, useTextures)
 			root_node[i + nOffset] = {name = "submesh", attr = lodAttrTable};
 		end
 		self:WriteXMLFile(filename, root_node);
-		GameLogic.AddBBS("ParaXModel", format(L"成功导出ParaX文件到%s", commonlib.Encoding.DefaultToUtf8(filename)),  4000, "0 255 0");
+        if(GameLogic)then
+    		GameLogic.AddBBS("ParaXModel", format(L"成功导出ParaX文件到%s", commonlib.Encoding.DefaultToUtf8(filename)),  4000, "0 255 0");
+        end
 	else
 		LOG.std(nil, "info", "ParaXExporter", "no valid input");
 	end

@@ -21,9 +21,9 @@ local ParaXExporter = commonlib.gettable("Mod.ParaXExporter");
 ParaXExporter:ConvertFromBMaxToParaX("Mod/ParaXExporter/test/input.bmax", "temp/output.x");
 
 -- export to ParaX with textures
-ParaXExporter:ConvertFromBMaxToParaX("Mod/ParaXExporter/test/input.bmax", "temp/output.x", true);
+ParaXExporter:ConvertFromBMaxToParaX("Mod/ParaXExporter/test/input.bmax", "temp/output.x", true, true);
 -- or
-ParaXExporter:Export("Mod/ParaXExporter/test/input.bmax", "temp/output.x", true);
+ParaXExporter:Export("Mod/ParaXExporter/test/input.bmax", "temp/output.x", true, true);
 ```
 
 Reference:

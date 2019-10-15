@@ -312,7 +312,6 @@ function BMaxModel:CalculateAABB(nodes)
 	self.m_centerPos[3]= (depth + 1.0) * 0.5;
 
 	-- print("center", self.m_centerPos[1], self.m_centerPos[2], self.m_centerPos[3]);
-
 	if (self.m_bAutoScale) then
 		local fMaxLength = math.max(math.max(height, width), depth) + 1;
 		self.m_fScale = self:CalculateScale(fMaxLength);
