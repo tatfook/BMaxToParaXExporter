@@ -75,13 +75,6 @@ function ParaXWriter.loadAssetFile(asset_file_name,callback)
 	loader:Start();
 end
 
-function ParaXWriter:SaveTextures(output_root_folder)
-	ParaAsset.SetAssetServerUrl("http://cdn.keepwork.com/update61/assetdownload/update/");
-	ParaXWriter.loadAssetFile(self.model.m_textures, function()
-		ParaXWriter.copyFiles(self.model.m_textures, output_root_folder);
-	end);
-end
-
 function ParaXWriter:SaveAsBinary(output_file_name, useTextures)
 
 	if(not self:IsValid()) then
@@ -98,10 +91,6 @@ function ParaXWriter:SaveAsBinary(output_file_name, useTextures)
 	LOG.std(nil, "info", "ParaXWriter", "file written to %s with %d bytes", output_file_name, self.data_length);
 	self.file:close();
 
-	if (useTextures) then
-		local output_root_folder = ParaIO.GetParentDirectoryFromPath(output_file_name, 0);
-		self:SaveTextures(output_root_folder);
-	end
 	return true;
 	
 end

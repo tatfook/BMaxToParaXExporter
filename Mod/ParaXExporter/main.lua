@@ -111,8 +111,8 @@ end
 
 -- @param input_file: *.bmax file name
 -- @param output_file: *.x fileame
-function ParaXExporter:ConvertFromBMaxToParaX(input_file, output_file, useTextures, bForceNoScale)
-	self:Export(input_file, output_file, useTextures, bForceNoScale);
+function ParaXExporter:ConvertFromBMaxToParaX(input_file, output_file, useTextures, bForceNoScale, zipArchive)
+	self:Export(input_file, output_file, useTextures, bForceNoScale, zipArchive);
 end
 
 -- @param input_file_name: file name. if it is *.bmax, we will convert this file and save output to *.x file.
@@ -120,7 +120,7 @@ end
 -- @param output_file_name: this should be nil, unless you explicitly specify an output name.
 -- @param useTextures: true to export textures
 -- @param bForceNoScale: true to export 1:1 .x
-function ParaXExporter:Export(input_file_name, output_file_name, useTextures, bForceNoScale)
+function ParaXExporter:Export(input_file_name, output_file_name, useTextures, bForceNoScale, zipArchive)
 	local name, extension;
 	if( input_file_name ) then
 		 name, extension = string.match(input_file_name,"(.+)%.(%w+)$");
@@ -138,14 +138,29 @@ function ParaXExporter:Export(input_file_name, output_file_name, useTextures, bF
 		output_file_name = output_file_name .. ".x";
 	end
 
+	local zip_root_dir, zip_root_name, zip_file_name, bmax_file_name;
+	if (zipArchive) then
+		useTextures = true
+		local root_dir = ParaIO.GetParentDirectoryFromPath(output_file_name, 0);
+		local file_name = ParaIO.GetFileName(output_file_name);
+		file_name = string.match(file_name,"(.+)%.(%w+)$");
+		zip_root_dir = string.format("%s%s/*.*", root_dir, file_name);
+		zip_root_name = string.format("%s%s/%s", root_dir, file_name, file_name);
+		zip_file_name = string.format("%s%s.zip", root_dir, file_name);
+		bmax_file_name = zip_root_name..".bmax";
+	end
+
 	local model = BMaxModel:new();
 	model:UseTextures(useTextures);
 	local isValid = true;
 	if(extension == "bmax") then
 		if ParaIO.DoesFileExist(input_file_name) then
 			LOG.std(nil, "info", "ParaXExporter", "exporting from %s to %s", input_file_name, output_file_name);
-            model:EnableAutoScale(not bForceNoScale);
+			model:EnableAutoScale(not bForceNoScale);
 			model:Load(input_file_name);
+			if (zipArchive) then
+				ParaIO.CopyFile(input_file_name, bmax_file_name, true);
+			end
 		else 
 			isValid = false;
 		end
@@ -167,19 +182,26 @@ function ParaXExporter:Export(input_file_name, output_file_name, useTextures, bF
 					return;
 				end
 			end
+
+			if (zipArchive) then
+				self:WriteBMaxFile(bmax_file_name, blocks);
+			end
 			LOG.std(nil, "info", "ParaXExporter", "exporting from selection to %s", output_file_name);
 			-- update block entity data if any
 			for _, b in ipairs(blocks) do
 				b[6] = b[6] or Game.BlockEngine:GetBlockEntityData(b[1], b[2], b[3]);
 			end
 			
-            model:EnableAutoScale(not bForceNoScale);
+			model:EnableAutoScale(not bForceNoScale);
 			model:LoadFromBlocks(blocks);
 		end
 	end
 
 	if isValid then
 		output_file_name = output_file_name:gsub("%.x[ml]*$", "");
+		if (zipArchive) then
+			output_file_name = zip_root_name;
+		end
 		local actor_model;
 
 		if model.m_modelType == BMaxModel.ModelTypeBlockModel then
@@ -197,7 +219,7 @@ function ParaXExporter:Export(input_file_name, output_file_name, useTextures, bF
 		local originRectangles = actor_model.m_originRectangles;
 		if originRectangles then
 			actor_model:FillVerticesAndIndices(originRectangles);
-			self:WriteParaXFile(actor_model, output_file_name, 0, useTextures);
+			isValid = self:WriteParaXFile(actor_model, output_file_name, 0, useTextures);
 			boundingMin = actor_model:GetMinExtent();
 			boundindMax = actor_model:GetMaxExtent();
 		end
@@ -227,9 +249,22 @@ function ParaXExporter:Export(input_file_name, output_file_name, useTextures, bF
 			root_node[i + nOffset] = {name = "submesh", attr = lodAttrTable};
 		end
 		self:WriteXMLFile(filename, root_node);
-        if(GameLogic)then
-    		GameLogic.AddBBS("ParaXModel", format(L"成功导出ParaX文件到%s", commonlib.Encoding.DefaultToUtf8(filename)),  4000, "0 255 0");
-        end
+		if(GameLogic)then
+			GameLogic.AddBBS("ParaXModel", format(L"成功导出ParaX文件到%s", commonlib.Encoding.DefaultToUtf8(filename)),  4000, "0 255 0");
+		end
+
+		if (isValid) then
+			if (useTextures) then
+				ParaAsset.SetAssetServerUrl("http://cdn.keepwork.com/update61/assetdownload/update/");
+				ParaXWriter.loadAssetFile(actor_model.m_textures, function()
+					local output_root_folder = ParaIO.GetParentDirectoryFromPath(output_file_name, 0);
+					local textures = ParaXWriter.copyFiles(actor_model.m_textures, output_root_folder);
+					if (zipArchive) then
+						self:WriteZipFile(zip_file_name, zip_root_dir);
+					end
+				end);
+			end
+		end
 	else
 		LOG.std(nil, "info", "ParaXExporter", "no valid input");
 	end
@@ -268,4 +303,36 @@ function ParaXExporter:WriteParaXFile(model, output_file_name, meter, useTexture
 		end, _guihelper.MessageBoxButtons.YesNo);--]]
 	end
 	return res;
+end
+
+function ParaXExporter:WriteBMaxFile(bmax_file_name, blocks)
+	ParaIO.CreateDirectory(bmax_file_name);
+	local o = {name="pe:blocktemplate", attr = {}};
+	o[1] = {name="pe:blocks", [1]=commonlib.serialize_compact(blocks, true),};
+	local xml_data = commonlib.Lua2XmlString(o, true, true);
+	if (xml_data) then
+		if #xml_data >= 10240 then
+			local writer = ParaIO.CreateZip(bmax_file_name, "");
+			if (writer:IsValid()) then
+				writer:ZipAddData("data", xml_data);
+				writer:close();
+			end
+		else
+			local file = ParaIO.open(bmax_file_name, "w");
+			if(file:IsValid()) then
+				file:WriteString(xml_data);
+				file:close();
+			end
+		end
+	end
+end
+
+function ParaXExporter:WriteZipFile(zip_file_name, zip_root_dir)
+	local file = ParaIO.CreateZip(zip_file_name, "");
+	if (file:IsValid()) then
+		local dir_name = ParaIO.GetFileName(zip_file_name);
+		dir_name = string.match(dir_name,"(.+)%.(%w+)$");
+		file:AddDirectory(dir_name, zip_root_dir, 3);
+		file:close();
+	end
 end
