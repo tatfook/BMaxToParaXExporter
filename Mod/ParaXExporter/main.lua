@@ -115,6 +115,75 @@ function ParaXExporter:ConvertFromBMaxToParaX(input_file, output_file, useTextur
 	self:Export(input_file, output_file, useTextures, bForceNoScale, zipArchive);
 end
 
+function ParaXExporter:ConvertBlocksToParaX(blocks, output_file_name, bForceNoScale)
+	if ((not blocks) or (not output_file_name)) then return end
+
+	if(#blocks == 1) then
+		local v = blocks[1];
+		local entity = Game.BlockEngine:GetBlockEntity(v[1], v[2], v[3]);
+		if(entity and entity:isa(Game.EntityManager.EntityBlockModel)) then
+			-- if there is only one entity block model, we will simply export the model data
+			local filename = entity:GetModelDiskFilePath();
+			NPL.load("(gl)script/ide/System/Scene/Assets/ParaXModelAttr.lua");
+			local ParaXModelAttr = commonlib.gettable("System.Scene.Assets.ParaXModelAttr");
+			local attr = ParaXModelAttr:new():initFromPlayer(entity:GetInnerObject())
+			LOG.std(nil, "info", "ParaXExporter", "exporting from %s to %s", filename, output_file_name);
+			attr:SaveToDisk(output_file_name);
+			GameLogic.AddBBS(nil, format(L"文件导出到 %s", commonlib.Encoding.DefaultToUtf8(output_file_name)));
+			return;
+		end
+	end
+
+	output_file_name, extension = string.match(output_file_name,"(.+)%.(%w+)$");
+	local bmax_file_name = output_file_name..".bmax";
+	self:WriteBMaxFile(bmax_file_name, blocks);
+
+	-- update block entity data if any
+	for _, b in ipairs(blocks) do
+		b[6] = b[6] or Game.BlockEngine:GetBlockEntityData(b[1], b[2], b[3]);
+	end
+	
+	local model = BMaxModel:new();
+	model:UseTextures(true);
+	model:EnableAutoScale(not bForceNoScale);
+	model:LoadFromBlocks(blocks);
+
+	local actor_model;
+	if model.m_modelType == BMaxModel.ModelTypeBlockModel then
+		actor_model = model;
+	elseif model.m_modelType == BMaxModel.ModelTypeMovieModel then
+		actor_model = model.actor_model;
+	end
+	if(not actor_model) then
+		LOG.std(nil, "warn", "ParaXExporter", "actor model not found in %s", output_file_name);
+		return;
+	end
+
+	local boundingMin;
+	local boundindMax;
+	local originRectangles = actor_model.m_originRectangles;
+	if originRectangles then
+		actor_model:FillVerticesAndIndices(originRectangles);
+		self:WriteParaXFile(actor_model, output_file_name, 0, true);
+		boundingMin = actor_model:GetMinExtent();
+		boundindMax = actor_model:GetMaxExtent();
+	end
+
+	local filename = output_file_name .. ".xml";
+	local root_node = {name = "mesh", attr = {version = "1", type = "0"}};
+
+	local boundingTable = {minx=boundingMin[1], miny=boundingMin[2], minz=boundingMin[3],
+						   maxx=boundindMax[1], maxy=boundindMax[2], maxz=boundindMax[3]};
+	root_node[#root_node+1] = {name = "boundingbox", attr = boundingTable};
+	root_node[#root_node+1] = {name = "submesh", attr = {loddist = BMaxModel.LodIndexToMeter[1], 
+		filename = string.match(output_file_name, "[^/\\]+$") ..".x"}};
+
+	self:WriteXMLFile(filename, root_node);
+	if(GameLogic)then
+		GameLogic.AddBBS("ParaXModel", format(L"成功导出ParaX文件到%s", commonlib.Encoding.DefaultToUtf8(filename)),  4000, "0 255 0");
+	end
+end
+
 -- @param input_file_name: file name. if it is *.bmax, we will convert this file and save output to *.x file.
 -- if it is not, we will convert current selection to *.x files. 
 -- @param output_file_name: this should be nil, unless you explicitly specify an output name.
@@ -183,14 +252,14 @@ function ParaXExporter:Export(input_file_name, output_file_name, useTextures, bF
 				end
 			end
 
-			if (zipArchive) then
-				self:WriteBMaxFile(bmax_file_name, blocks);
-			end
-			LOG.std(nil, "info", "ParaXExporter", "exporting from selection to %s", output_file_name);
 			-- update block entity data if any
 			for _, b in ipairs(blocks) do
 				b[6] = b[6] or Game.BlockEngine:GetBlockEntityData(b[1], b[2], b[3]);
 			end
+			if (zipArchive) then
+				self:WriteBMaxFile(bmax_file_name, blocks);
+			end
+			LOG.std(nil, "info", "ParaXExporter", "exporting from selection to %s", output_file_name);
 			
 			model:EnableAutoScale(not bForceNoScale);
 			model:LoadFromBlocks(blocks);
@@ -311,18 +380,10 @@ function ParaXExporter:WriteBMaxFile(bmax_file_name, blocks)
 	o[1] = {name="pe:blocks", [1]=commonlib.serialize_compact(blocks, true),};
 	local xml_data = commonlib.Lua2XmlString(o, true, true);
 	if (xml_data) then
-		if #xml_data >= 10240 then
-			local writer = ParaIO.CreateZip(bmax_file_name, "");
-			if (writer:IsValid()) then
-				writer:ZipAddData("data", xml_data);
-				writer:close();
-			end
-		else
-			local file = ParaIO.open(bmax_file_name, "w");
-			if(file:IsValid()) then
-				file:WriteString(xml_data);
-				file:close();
-			end
+		local file = ParaIO.open(bmax_file_name, "w");
+		if(file:IsValid()) then
+			file:WriteString(xml_data);
+			file:close();
 		end
 	end
 end
