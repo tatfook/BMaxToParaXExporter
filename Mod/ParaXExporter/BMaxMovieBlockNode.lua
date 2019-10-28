@@ -131,8 +131,8 @@ function BMaxMovieBlockNode:ParseMovieDetail()
 end
 
 function BMaxMovieBlockNode:ParseSpeed(timeseries)
-	local speedScaleTable = timeseries.speedscale;
-	local speedData = speedScaleTable.data;
+	local speedScaleTable = timeseries.speedscale or {};
+	local speedData = speedScaleTable.data or {};
 	if #speedData > 0 then
 		for _, speed in ipairs(speedData) do
 			table.insert(self.m_speeds, speed)
@@ -153,9 +153,9 @@ function BMaxMovieBlockNode:ParseAnimId(timeseries)
 
 	local signAnimId = self:GetSignAnimId();
 	
-	local animTable = timeseries.anim;
-	local animData = animTable.data;
-	local animTimeData = animTable.times;
+	local animTable = timeseries.anim or {};
+	local animData = animTable.data or {};
+	local animTimeData = animTable.times or {};
 	if #animData > 0 and #animTimeData > 0 then
 		for _, animId in ipairs(animData) do
 			table.insert(self.m_animIds, animId)
@@ -195,7 +195,7 @@ function BMaxMovieBlockNode:GetAssetName(actor_table)
 
 	local timeseries = actor_table.timeseries;
 	local asset_file = timeseries.assetfile;
-	local file_name = asset_file.data[1];
+	local file_name = asset_file and asset_file.data[1] or "";
 	local name, extension = string.match(file_name, "(.+)%.(%w+)$");
 
 	if (extension == "bmax") then
