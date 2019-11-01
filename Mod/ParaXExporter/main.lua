@@ -99,11 +99,41 @@ function ParaXExporter:RegisterCommand()
 		handler = function(cmd_name, cmd_text, cmd_params, fromEntity)
 			local file_name;
 			file_name = (cmd_text or ""):gsub("^%s+", ""):gsub("%s+$", "");
-			if(file_name and filename~="") then
+			if(file_name and file_name~="") then
 				if(not file_name:match("[/\\]")) then
 					file_name = GameLogic.GetWorldDirectory()..file_name;
 				end
 				self:Export(nil, file_name);
+			end
+		end,
+	};
+	Commands["exportxfile"] = {
+		name="exportxfile", 
+		quick_ref="/exportxfile [filename.fbx|bmax]", 
+		desc=[[export a given file(*.fbx|bmax) to paraX file (*.x) file
+/exportxfile test.fbx
+/exportxfile test.bmax
+]], 
+		handler = function(cmd_name, cmd_text, cmd_params, fromEntity)
+			local filename;
+			filename = (cmd_text or ""):gsub("^%s+", ""):gsub("%s+$", "");
+			if(filename and filename~="") then
+				NPL.load("(gl)script/apps/Aries/Creator/Game/Common/Files.lua");
+				local Files = commonlib.gettable("MyCompany.Aries.Game.Common.Files");
+				filename = Files.WorldPathToFullPath(filename, true)
+				if(filename) then
+					local output_file_name = filename:gsub("%.(%w%w%w)$", ".x")
+					LOG.std(nil, "info", "ParaXExporter", "exporting from %s to %s", filename, output_file_name);
+					NPL.load("(gl)script/ide/System/Scene/Assets/ParaXModelAttr.lua");
+					local ParaXModelAttr = commonlib.gettable("System.Scene.Assets.ParaXModelAttr");
+					local attr = ParaXModelAttr:new():initFromAssetFile(filename, function(attr)
+						LOG.std(nil, "info", "ParaXExporter", "exporting from %s to %s", filename, output_file_name);
+						attr:SaveToDisk(output_file_name);
+						GameLogic.AddBBS(nil, format(L"文件导出到 %s", commonlib.Encoding.DefaultToUtf8(output_file_name)));
+					end)
+				else
+					LOG.std(nil, "info", "ParaXExporter", "file not found for %s", cmd_text);
+				end
 			end
 		end,
 	};
