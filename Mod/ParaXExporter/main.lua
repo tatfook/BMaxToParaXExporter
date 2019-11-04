@@ -122,7 +122,7 @@ function ParaXExporter:RegisterCommand()
 				local Files = commonlib.gettable("MyCompany.Aries.Game.Common.Files");
 				filename = Files.WorldPathToFullPath(filename, true)
 				if(filename) then
-					local output_file_name = filename:gsub("%.(%w%w%w)$", ".x")
+					local output_file_name = filename:gsub("%.(%w+)$", ".x")
 					LOG.std(nil, "info", "ParaXExporter", "exporting from %s to %s", filename, output_file_name);
 					NPL.load("(gl)script/ide/System/Scene/Assets/ParaXModelAttr.lua");
 					local ParaXModelAttr = commonlib.gettable("System.Scene.Assets.ParaXModelAttr");
