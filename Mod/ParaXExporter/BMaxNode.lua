@@ -37,7 +37,7 @@ function BMaxNode:ctor()
 	self.block_model = nil;
 end
 
-function BMaxNode:init(model, x, y, z, template_id, block_data, block_content)
+function BMaxNode:init(model, x, y, z, template_id, block_data, block_content, counterclockwise)
 	self.model = model;
 	self.x = x;
 	self.y = y;
@@ -45,6 +45,7 @@ function BMaxNode:init(model, x, y, z, template_id, block_data, block_content)
 	self.template_id = template_id;
 	self.block_data = block_data;
 	self.block_content = block_content;
+	self.counterclockwise = counterclockwise;
 	local blocktemplate = block_types.get(template_id);
 	if(blocktemplate) then
 		self.solid = blocktemplate.solid;
@@ -92,7 +93,7 @@ local neighborBlocks = {};
 
 -- create a new cube from this node.
 function BMaxNode:CreateCube()
-	local cube = BlockModel:new():InitCube(self.texFaceNum);
+	local cube = BlockModel:new():InitCube(self.texFaceNum, self.counterclockwise);
 	local dx = self.x - self.model.m_centerPos[1];
 	local dy = self.y - self.model.m_centerPos[2];
 	local dz = self.z - self.model.m_centerPos[3];

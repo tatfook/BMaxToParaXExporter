@@ -165,8 +165,8 @@ end
 
 -- public: load from array of blocks
 -- @param blocks: array of {x,y,z,id, data, serverdata}
-function BMaxModel:LoadFromBlocks(blocks)
-	self:InitFromBlocks(blocks);
+function BMaxModel:LoadFromBlocks(blocks, counterclockwise)
+	self:InitFromBlocks(blocks, counterclockwise);
 	if self.m_modelType == BMaxModel.ModelTypeMovieModel then
 		self:ParseMovieBlocks();
 	elseif self.m_modelType == BMaxModel.ModelTypeBlockModel then
@@ -203,7 +203,7 @@ end
 
 -- load from array of blocks
 -- @param blocks: array of {x,y,z,id, data, serverdata}
-function BMaxModel:InitFromBlocks(blocks)
+function BMaxModel:InitFromBlocks(blocks, counterclockwise)
 	if(not blocks) then
 		return
 	end
@@ -237,7 +237,7 @@ function BMaxModel:InitFromBlocks(blocks)
 			table.insert(nodes, frameNode);
 			table.insert(self.m_bones, frameNode);
 		else 
-			local node = BMaxNode:new():init(self, x,y,z,template_id, block_data);
+			local node = BMaxNode:new():init(self, x,y,z,template_id, block_data, counterclockwise);
 			table.insert(nodes, node);
 		end
 		

@@ -176,7 +176,7 @@ function ParaXExporter:ConvertBlocksToParaX(blocks, output_file_name, bForceNoSc
 	local model = BMaxModel:new();
 	model:UseTextures(true);
 	model:EnableAutoScale(not bForceNoScale);
-	model:LoadFromBlocks(blocks);
+	model:LoadFromBlocks(blocks, true);
 
 	local actor_model;
 	if model.m_modelType == BMaxModel.ModelTypeBlockModel then

@@ -79,8 +79,8 @@ function BlockModel:ctor()
 end
 
 -- init the model as a cube
-function BlockModel:InitCube(texFaceNum)
-	self:MakeCube(texFaceNum);
+function BlockModel:InitCube(texFaceNum, counterclockwise)
+	self:MakeCube(texFaceNum, counterclockwise);
 	return self;
 end
 
@@ -96,198 +96,389 @@ end
 
 
 -- make this block model as a cube 
-function BlockModel:MakeCube(texFaceNum)
+function BlockModel:MakeCube(texFaceNum, counterclockwise)
 	local vertices = self.m_vertices;
 
 	for i=1, 24 do
 		vertices[i] = {};
 	end
-	--top face
-	vertices[1].position = vector3d:new({0,1,0});
-	vertices[2].position = vector3d:new({0,1,1});
-	vertices[3].position = vector3d:new({1,1,1});
-	vertices[4].position = vector3d:new({1,1,0});
 
-	vertices[1].normal = vector3d:new({0,1,0});
-	vertices[2].normal = vector3d:new({0,1,0});
-	vertices[3].normal = vector3d:new({0,1,0});
-	vertices[4].normal = vector3d:new({0,1,0});
+	if (counterclockwise) then
+		--top face
+		vertices[1].position = vector3d:new({0,1,0});
+		vertices[2].position = vector3d:new({1,1,0});
+		vertices[3].position = vector3d:new({1,1,1});
+		vertices[4].position = vector3d:new({0,1,1});
 
-	--front face
-	vertices[5].position = vector3d:new({0,0,0});
-	vertices[6].position = vector3d:new({0,1,0});
-	vertices[7].position = vector3d:new({1,1,0});
-	vertices[8].position = vector3d:new({1,0,0});
+		vertices[1].normal = vector3d:new({0,1,0});
+		vertices[2].normal = vector3d:new({0,1,0});
+		vertices[3].normal = vector3d:new({0,1,0});
+		vertices[4].normal = vector3d:new({0,1,0});
 
-	vertices[5].normal = vector3d:new({0,0,-1});
-	vertices[6].normal = vector3d:new({0,0,-1});
-	vertices[7].normal = vector3d:new({0,0,-1});
-	vertices[8].normal = vector3d:new({0,0,-1});
+		--front face
+		vertices[5].position = vector3d:new({0,0,0});
+		vertices[6].position = vector3d:new({1,0,0});
+		vertices[7].position = vector3d:new({1,1,0});
+		vertices[8].position = vector3d:new({0,1,0});
 
-	--bottom face
-	vertices[9].position = vector3d:new({0,0,1});
-	vertices[10].position = vector3d:new({0,0,0});
-	vertices[11].position = vector3d:new({1,0,0});
-	vertices[12].position = vector3d:new({1,0,1});
+		vertices[5].normal = vector3d:new({0,0,-1});
+		vertices[6].normal = vector3d:new({0,0,-1});
+		vertices[7].normal = vector3d:new({0,0,-1});
+		vertices[8].normal = vector3d:new({0,0,-1});
 
-	vertices[9].normal = vector3d:new({0,-1,0});
-	vertices[10].normal = vector3d:new({0,-1,0});
-	vertices[11].normal = vector3d:new({0,-1,0});
-	vertices[12].normal = vector3d:new({0,-1,0});
+		--bottom face
+		vertices[9].position = vector3d:new({0,0,1});
+		vertices[10].position = vector3d:new({1,0,1});
+		vertices[11].position = vector3d:new({1,0,0});
+		vertices[12].position = vector3d:new({0,0,0});
 
-	--left face
-	vertices[13].position = vector3d:new({0,0,1});
-	vertices[14].position = vector3d:new({0,1,1});
-	vertices[15].position = vector3d:new({0,1,0});
-	vertices[16].position = vector3d:new({0,0,0});
+		vertices[9].normal = vector3d:new({0,-1,0});
+		vertices[10].normal = vector3d:new({0,-1,0});
+		vertices[11].normal = vector3d:new({0,-1,0});
+		vertices[12].normal = vector3d:new({0,-1,0});
 
-	vertices[13].normal = vector3d:new({-1,0,0});
-	vertices[14].normal = vector3d:new({-1,0,0});
-	vertices[15].normal = vector3d:new({-1,0,0});
-	vertices[16].normal = vector3d:new({-1,0,0});
+		--left face
+		vertices[13].position = vector3d:new({0,0,1});
+		vertices[14].position = vector3d:new({0,0,0});
+		vertices[15].position = vector3d:new({0,1,0});
+		vertices[16].position = vector3d:new({0,1,1});
 
-	--right face
-	vertices[17].position = vector3d:new({1,0,0});
-	vertices[18].position = vector3d:new({1,1,0});
-	vertices[19].position = vector3d:new({1,1,1});
-	vertices[20].position = vector3d:new({1,0,1});
+		vertices[13].normal = vector3d:new({-1,0,0});
+		vertices[14].normal = vector3d:new({-1,0,0});
+		vertices[15].normal = vector3d:new({-1,0,0});
+		vertices[16].normal = vector3d:new({-1,0,0});
 
-	vertices[17].normal = vector3d:new({1,0,0});
-	vertices[18].normal = vector3d:new({1,0,0});
-	vertices[19].normal = vector3d:new({1,0,0});
-	vertices[20].normal = vector3d:new({1,0,0});
+		--right face
+		vertices[17].position = vector3d:new({1,0,0});
+		vertices[18].position = vector3d:new({1,0,1});
+		vertices[19].position = vector3d:new({1,1,1});
+		vertices[20].position = vector3d:new({1,1,0});
 
-	--back face
-	vertices[21].position = vector3d:new({1,0,1});
-	vertices[22].position = vector3d:new({1,1,1});
-	vertices[23].position = vector3d:new({0,1,1});
-	vertices[24].position = vector3d:new({0,0,1});
+		vertices[17].normal = vector3d:new({1,0,0});
+		vertices[18].normal = vector3d:new({1,0,0});
+		vertices[19].normal = vector3d:new({1,0,0});
+		vertices[20].normal = vector3d:new({1,0,0});
 
-	vertices[21].normal = vector3d:new({0,0,1});
-	vertices[22].normal = vector3d:new({0,0,1});
-	vertices[23].normal = vector3d:new({0,0,1});
-	vertices[24].normal = vector3d:new({0,0,1}); 
+		--back face
+		vertices[21].position = vector3d:new({1,0,1});
+		vertices[22].position = vector3d:new({0,0,1});
+		vertices[23].position = vector3d:new({0,1,1});
+		vertices[24].position = vector3d:new({1,1,1});
 
-	if (texFaceNum == 3) then
-		vertices[1].uv = vector2d:new(0, 0.5);
-		vertices[2].uv = vector2d:new(0, 0);
-		vertices[3].uv = vector2d:new(0.5, 0);
-		vertices[4].uv = vector2d:new(0.5, 0.5);
+		vertices[21].normal = vector3d:new({0,0,1});
+		vertices[22].normal = vector3d:new({0,0,1});
+		vertices[23].normal = vector3d:new({0,0,1});
+		vertices[24].normal = vector3d:new({0,0,1}); 
 
-		vertices[5].uv = vector2d:new(0, 1);
-		vertices[6].uv = vector2d:new(0, 0.5);
-		vertices[7].uv = vector2d:new(0.5, 0.5);
-		vertices[8].uv = vector2d:new(0.5, 1);
+		if (texFaceNum == 3) then
+			vertices[1].uv = vector2d:new(0, 0.5);
+			vertices[2].uv = vector2d:new(0.5, 0.5);
+			vertices[3].uv = vector2d:new(0.5, 0);
+			vertices[4].uv = vector2d:new(0, 0);
 
-		vertices[9].uv = vector2d:new(0.5, 0.5);
-		vertices[10].uv = vector2d:new(0.5, 0);
-		vertices[11].uv = vector2d:new(1, 0);
-		vertices[12].uv = vector2d:new(1, 0.5);
+			vertices[5].uv = vector2d:new(0, 1);
+			vertices[6].uv = vector2d:new(0.5, 1);
+			vertices[7].uv = vector2d:new(0.5, 0.5);
+			vertices[8].uv = vector2d:new(0, 0.5);
 
-		vertices[13].uv = vector2d:new(0, 1);
-		vertices[14].uv = vector2d:new(0, 0.5);
-		vertices[15].uv = vector2d:new(0.5, 0.5);
-		vertices[16].uv = vector2d:new(0.5, 1);
+			vertices[9].uv = vector2d:new(0.5, 0.5);
+			vertices[10].uv = vector2d:new(1, 0.5);
+			vertices[11].uv = vector2d:new(1, 0);
+			vertices[12].uv = vector2d:new(0.5, 0);
 
-		vertices[17].uv = vector2d:new(0, 1);
-		vertices[18].uv = vector2d:new(0, 0.5);
-		vertices[19].uv = vector2d:new(0.5, 0.5);
-		vertices[20].uv = vector2d:new(0.5, 1);
+			vertices[13].uv = vector2d:new(0, 1);
+			vertices[14].uv = vector2d:new(0.5, 1);
+			vertices[15].uv = vector2d:new(0.5, 0.5);
+			vertices[16].uv = vector2d:new(0, 0.5);
 
-		vertices[21].uv = vector2d:new(0, 1);
-		vertices[22].uv = vector2d:new(0, 0.5);
-		vertices[23].uv = vector2d:new(0.5, 0.5);
-		vertices[24].uv = vector2d:new(0.5, 1);
-	elseif (texFaceNum == 4) then
-		vertices[1].uv = vector2d:new(0, 0.5);
-		vertices[2].uv = vector2d:new(0, 0);
-		vertices[3].uv = vector2d:new(0.5, 0);
-		vertices[4].uv = vector2d:new(0.5, 0.5);
+			vertices[17].uv = vector2d:new(0, 1);
+			vertices[18].uv = vector2d:new(0.5, 1);
+			vertices[19].uv = vector2d:new(0.5, 0.5);
+			vertices[20].uv = vector2d:new(0, 0.5);
 
-		vertices[5].uv = vector2d:new(0, 1);
-		vertices[6].uv = vector2d:new(0, 0.5);
-		vertices[7].uv = vector2d:new(0.5, 0.5);
-		vertices[8].uv = vector2d:new(0.5, 1);
+			vertices[21].uv = vector2d:new(0, 1);
+			vertices[22].uv = vector2d:new(0.5, 1);
+			vertices[23].uv = vector2d:new(0.5, 0.5);
+			vertices[24].uv = vector2d:new(0, 0.5);
+		elseif (texFaceNum == 4) then
+			vertices[1].uv = vector2d:new(0, 0.5);
+			vertices[2].uv = vector2d:new(0.5, 0.5);
+			vertices[3].uv = vector2d:new(0.5, 0);
+			vertices[4].uv = vector2d:new(0, 0);
 
-		vertices[9].uv = vector2d:new(0.5, 0.5);
-		vertices[10].uv = vector2d:new(0.5, 0);
-		vertices[11].uv = vector2d:new(1, 0);
-		vertices[12].uv = vector2d:new(1, 0.5);
+			vertices[5].uv = vector2d:new(0, 1);
+			vertices[6].uv = vector2d:new(0.5, 1);
+			vertices[7].uv = vector2d:new(0.5, 0.5);
+			vertices[8].uv = vector2d:new(0, 0.5);
 
-		vertices[13].uv = vector2d:new(0.5, 1);
-		vertices[14].uv = vector2d:new(0.5, 0.5);
-		vertices[15].uv = vector2d:new(1, 0.5);
-		vertices[16].uv = vector2d:new(1, 1);
+			vertices[9].uv = vector2d:new(0.5, 0.5);
+			vertices[10].uv = vector2d:new(1, 0.5);
+			vertices[11].uv = vector2d:new(1, 0);
+			vertices[12].uv = vector2d:new(0.5, 0);
 
-		vertices[17].uv = vector2d:new(0.5, 1);
-		vertices[18].uv = vector2d:new(0.5, 0.5);
-		vertices[19].uv = vector2d:new(1, 0.5);
-		vertices[20].uv = vector2d:new(1, 1);
+			vertices[13].uv = vector2d:new(0.5, 1);
+			vertices[14].uv = vector2d:new(1, 1);
+			vertices[15].uv = vector2d:new(1, 0.5);
+			vertices[16].uv = vector2d:new(0.5, 0.5);
 
-		vertices[21].uv = vector2d:new(0, 1);
-		vertices[22].uv = vector2d:new(0, 0.5);
-		vertices[23].uv = vector2d:new(0.5, 0.5);
-		vertices[24].uv = vector2d:new(0.5, 1);
-	elseif (texFaceNum == 6) then
-		vertices[1].uv = vector2d:new(0.5, 0);
-		vertices[2].uv = vector2d:new(0.5, 0);
-		vertices[3].uv = vector2d:new(0.375, 0);
-		vertices[4].uv = vector2d:new(0.375, 1);
+			vertices[17].uv = vector2d:new(0.5, 1);
+			vertices[18].uv = vector2d:new(1, 1);
+			vertices[19].uv = vector2d:new(1, 0.5);
+			vertices[20].uv = vector2d:new(0.5, 0.5);
 
-		vertices[5].uv = vector2d:new(0.5, 1);
-		vertices[6].uv = vector2d:new(0.5, 0);
-		vertices[7].uv = vector2d:new(0.375, 0);
-		vertices[8].uv = vector2d:new(0.375, 1);
+			vertices[21].uv = vector2d:new(0, 1);
+			vertices[22].uv = vector2d:new(0.5, 1);
+			vertices[23].uv = vector2d:new(0.5, 0.5);
+			vertices[24].uv = vector2d:new(0, 0.5);
+		elseif (texFaceNum == 6) then
+			vertices[1].uv = vector2d:new(0.5, 0);
+			vertices[2].uv = vector2d:new(0.375, 1);
+			vertices[3].uv = vector2d:new(0.375, 0);
+			vertices[4].uv = vector2d:new(0.5, 0);
 
-		vertices[9].uv = vector2d:new(0.625, 0);
-		vertices[10].uv = vector2d:new(0.625, 1);
-		vertices[11].uv = vector2d:new(0.75, 1);
-		vertices[12].uv = vector2d:new(0.75, 0);
+			vertices[5].uv = vector2d:new(0.5, 1);
+			vertices[6].uv = vector2d:new(0.375, 1);
+			vertices[7].uv = vector2d:new(0.375, 0);
+			vertices[8].uv = vector2d:new(0.5, 0);
 
-		vertices[13].uv = vector2d:new(0.125, 1);
-		vertices[14].uv = vector2d:new(0.125, 0);
-		vertices[15].uv = vector2d:new(0, 0);
-		vertices[16].uv = vector2d:new(0, 1);
+			vertices[9].uv = vector2d:new(0.625, 0);
+			vertices[10].uv = vector2d:new(0.75, 0);
+			vertices[11].uv = vector2d:new(0.75, 1);
+			vertices[12].uv = vector2d:new(0.625, 1);
 
-		vertices[17].uv = vector2d:new(0.375, 1);
-		vertices[18].uv = vector2d:new(0.375, 0);
-		vertices[19].uv = vector2d:new(0.25, 0);
-		vertices[20].uv = vector2d:new(0.25, 1);
+			vertices[13].uv = vector2d:new(0.125, 1);
+			vertices[14].uv = vector2d:new(0, 1);
+			vertices[15].uv = vector2d:new(0, 0);
+			vertices[16].uv = vector2d:new(0.125, 0);
 
-		vertices[21].uv = vector2d:new(0.25, 1);
-		vertices[22].uv = vector2d:new(0.25, 0);
-		vertices[23].uv = vector2d:new(0.125, 0);
-		vertices[24].uv = vector2d:new(0.125, 1);
+			vertices[17].uv = vector2d:new(0.375, 1);
+			vertices[18].uv = vector2d:new(0.25, 1);
+			vertices[19].uv = vector2d:new(0.25, 0);
+			vertices[20].uv = vector2d:new(0.375, 0);
+
+			vertices[21].uv = vector2d:new(0.25, 1);
+			vertices[22].uv = vector2d:new(0.125, 1);
+			vertices[23].uv = vector2d:new(0.125, 0);
+			vertices[24].uv = vector2d:new(0.25, 0);
+		else
+			vertices[1].uv = vector2d:new(0, 1);
+			vertices[2].uv = vector2d:new(1, 1);
+			vertices[3].uv = vector2d:new(1, 0);
+			vertices[4].uv = vector2d:new(0, 0);
+
+			vertices[5].uv = vector2d:new(0, 1);
+			vertices[6].uv = vector2d:new(1, 1);
+			vertices[7].uv = vector2d:new(1, 0);
+			vertices[8].uv = vector2d:new(0, 0);
+
+			vertices[9].uv = vector2d:new(0, 1);
+			vertices[10].uv = vector2d:new(1, 1);
+			vertices[11].uv = vector2d:new(1, 0);
+			vertices[12].uv = vector2d:new(0, 0);
+
+			vertices[13].uv = vector2d:new(0, 1);
+			vertices[14].uv = vector2d:new(1, 1);
+			vertices[15].uv = vector2d:new(1, 0);
+			vertices[16].uv = vector2d:new(0, 0);
+
+			vertices[17].uv = vector2d:new(0, 1);
+			vertices[18].uv = vector2d:new(1, 1);
+			vertices[19].uv = vector2d:new(1, 0);
+			vertices[20].uv = vector2d:new(0, 0);
+
+			vertices[21].uv = vector2d:new(0, 1);
+			vertices[22].uv = vector2d:new(1, 1);
+			vertices[23].uv = vector2d:new(1, 0);
+			vertices[24].uv = vector2d:new(0, 0);
+		end
 	else
-		vertices[1].uv = vector2d:new(0, 1);
-		vertices[2].uv = vector2d:new(0, 0);
-		vertices[3].uv = vector2d:new(1, 0);
-		vertices[4].uv = vector2d:new(1, 1);
+		--top face
+		vertices[1].position = vector3d:new({0,1,0});
+		vertices[2].position = vector3d:new({0,1,1});
+		vertices[3].position = vector3d:new({1,1,1});
+		vertices[4].position = vector3d:new({1,1,0});
 
-		vertices[5].uv = vector2d:new(0, 1);
-		vertices[6].uv = vector2d:new(0, 0);
-		vertices[7].uv = vector2d:new(1, 0);
-		vertices[8].uv = vector2d:new(1, 1);
+		vertices[1].normal = vector3d:new({0,1,0});
+		vertices[2].normal = vector3d:new({0,1,0});
+		vertices[3].normal = vector3d:new({0,1,0});
+		vertices[4].normal = vector3d:new({0,1,0});
 
-		vertices[9].uv = vector2d:new(0, 1);
-		vertices[10].uv = vector2d:new(0, 0);
-		vertices[11].uv = vector2d:new(1, 0);
-		vertices[12].uv = vector2d:new(1, 1);
+		--front face
+		vertices[5].position = vector3d:new({0,0,0});
+		vertices[6].position = vector3d:new({0,1,0});
+		vertices[7].position = vector3d:new({1,1,0});
+		vertices[8].position = vector3d:new({1,0,0});
 
-		vertices[13].uv = vector2d:new(0, 1);
-		vertices[14].uv = vector2d:new(0, 0);
-		vertices[15].uv = vector2d:new(1, 0);
-		vertices[16].uv = vector2d:new(1, 1);
+		vertices[5].normal = vector3d:new({0,0,-1});
+		vertices[6].normal = vector3d:new({0,0,-1});
+		vertices[7].normal = vector3d:new({0,0,-1});
+		vertices[8].normal = vector3d:new({0,0,-1});
 
-		vertices[17].uv = vector2d:new(0, 1);
-		vertices[18].uv = vector2d:new(0, 0);
-		vertices[19].uv = vector2d:new(1, 0);
-		vertices[20].uv = vector2d:new(1, 1);
+		--bottom face
+		vertices[9].position = vector3d:new({0,0,1});
+		vertices[10].position = vector3d:new({0,0,0});
+		vertices[11].position = vector3d:new({1,0,0});
+		vertices[12].position = vector3d:new({1,0,1});
 
-		vertices[21].uv = vector2d:new(0, 1);
-		vertices[22].uv = vector2d:new(0, 0);
-		vertices[23].uv = vector2d:new(1, 0);
-		vertices[24].uv = vector2d:new(1, 1);
+		vertices[9].normal = vector3d:new({0,-1,0});
+		vertices[10].normal = vector3d:new({0,-1,0});
+		vertices[11].normal = vector3d:new({0,-1,0});
+		vertices[12].normal = vector3d:new({0,-1,0});
+
+		--left face
+		vertices[13].position = vector3d:new({0,0,1});
+		vertices[14].position = vector3d:new({0,1,1});
+		vertices[15].position = vector3d:new({0,1,0});
+		vertices[16].position = vector3d:new({0,0,0});
+
+		vertices[13].normal = vector3d:new({-1,0,0});
+		vertices[14].normal = vector3d:new({-1,0,0});
+		vertices[15].normal = vector3d:new({-1,0,0});
+		vertices[16].normal = vector3d:new({-1,0,0});
+
+		--right face
+		vertices[17].position = vector3d:new({1,0,0});
+		vertices[18].position = vector3d:new({1,1,0});
+		vertices[19].position = vector3d:new({1,1,1});
+		vertices[20].position = vector3d:new({1,0,1});
+
+		vertices[17].normal = vector3d:new({1,0,0});
+		vertices[18].normal = vector3d:new({1,0,0});
+		vertices[19].normal = vector3d:new({1,0,0});
+		vertices[20].normal = vector3d:new({1,0,0});
+
+		--back face
+		vertices[21].position = vector3d:new({1,0,1});
+		vertices[22].position = vector3d:new({1,1,1});
+		vertices[23].position = vector3d:new({0,1,1});
+		vertices[24].position = vector3d:new({0,0,1});
+
+		vertices[21].normal = vector3d:new({0,0,1});
+		vertices[22].normal = vector3d:new({0,0,1});
+		vertices[23].normal = vector3d:new({0,0,1});
+		vertices[24].normal = vector3d:new({0,0,1}); 
+
+		if (texFaceNum == 3) then
+			vertices[1].uv = vector2d:new(0, 0.5);
+			vertices[2].uv = vector2d:new(0, 0);
+			vertices[3].uv = vector2d:new(0.5, 0);
+			vertices[4].uv = vector2d:new(0.5, 0.5);
+
+			vertices[5].uv = vector2d:new(0, 1);
+			vertices[6].uv = vector2d:new(0, 0.5);
+			vertices[7].uv = vector2d:new(0.5, 0.5);
+			vertices[8].uv = vector2d:new(0.5, 1);
+
+			vertices[9].uv = vector2d:new(0.5, 0.5);
+			vertices[10].uv = vector2d:new(0.5, 0);
+			vertices[11].uv = vector2d:new(1, 0);
+			vertices[12].uv = vector2d:new(1, 0.5);
+
+			vertices[13].uv = vector2d:new(0, 1);
+			vertices[14].uv = vector2d:new(0, 0.5);
+			vertices[15].uv = vector2d:new(0.5, 0.5);
+			vertices[16].uv = vector2d:new(0.5, 1);
+
+			vertices[17].uv = vector2d:new(0, 1);
+			vertices[18].uv = vector2d:new(0, 0.5);
+			vertices[19].uv = vector2d:new(0.5, 0.5);
+			vertices[20].uv = vector2d:new(0.5, 1);
+
+			vertices[21].uv = vector2d:new(0, 1);
+			vertices[22].uv = vector2d:new(0, 0.5);
+			vertices[23].uv = vector2d:new(0.5, 0.5);
+			vertices[24].uv = vector2d:new(0.5, 1);
+		elseif (texFaceNum == 4) then
+			vertices[1].uv = vector2d:new(0, 0.5);
+			vertices[2].uv = vector2d:new(0, 0);
+			vertices[3].uv = vector2d:new(0.5, 0);
+			vertices[4].uv = vector2d:new(0.5, 0.5);
+
+			vertices[5].uv = vector2d:new(0, 1);
+			vertices[6].uv = vector2d:new(0, 0.5);
+			vertices[7].uv = vector2d:new(0.5, 0.5);
+			vertices[8].uv = vector2d:new(0.5, 1);
+
+			vertices[9].uv = vector2d:new(0.5, 0.5);
+			vertices[10].uv = vector2d:new(0.5, 0);
+			vertices[11].uv = vector2d:new(1, 0);
+			vertices[12].uv = vector2d:new(1, 0.5);
+
+			vertices[13].uv = vector2d:new(0.5, 1);
+			vertices[14].uv = vector2d:new(0.5, 0.5);
+			vertices[15].uv = vector2d:new(1, 0.5);
+			vertices[16].uv = vector2d:new(1, 1);
+
+			vertices[17].uv = vector2d:new(0.5, 1);
+			vertices[18].uv = vector2d:new(0.5, 0.5);
+			vertices[19].uv = vector2d:new(1, 0.5);
+			vertices[20].uv = vector2d:new(1, 1);
+
+			vertices[21].uv = vector2d:new(0, 1);
+			vertices[22].uv = vector2d:new(0, 0.5);
+			vertices[23].uv = vector2d:new(0.5, 0.5);
+			vertices[24].uv = vector2d:new(0.5, 1);
+		elseif (texFaceNum == 6) then
+			vertices[1].uv = vector2d:new(0.5, 0);
+			vertices[2].uv = vector2d:new(0.5, 0);
+			vertices[3].uv = vector2d:new(0.375, 0);
+			vertices[4].uv = vector2d:new(0.375, 1);
+
+			vertices[5].uv = vector2d:new(0.5, 1);
+			vertices[6].uv = vector2d:new(0.5, 0);
+			vertices[7].uv = vector2d:new(0.375, 0);
+			vertices[8].uv = vector2d:new(0.375, 1);
+
+			vertices[9].uv = vector2d:new(0.625, 0);
+			vertices[10].uv = vector2d:new(0.625, 1);
+			vertices[11].uv = vector2d:new(0.75, 1);
+			vertices[12].uv = vector2d:new(0.75, 0);
+
+			vertices[13].uv = vector2d:new(0.125, 1);
+			vertices[14].uv = vector2d:new(0.125, 0);
+			vertices[15].uv = vector2d:new(0, 0);
+			vertices[16].uv = vector2d:new(0, 1);
+
+			vertices[17].uv = vector2d:new(0.375, 1);
+			vertices[18].uv = vector2d:new(0.375, 0);
+			vertices[19].uv = vector2d:new(0.25, 0);
+			vertices[20].uv = vector2d:new(0.25, 1);
+
+			vertices[21].uv = vector2d:new(0.25, 1);
+			vertices[22].uv = vector2d:new(0.25, 0);
+			vertices[23].uv = vector2d:new(0.125, 0);
+			vertices[24].uv = vector2d:new(0.125, 1);
+		else
+			vertices[1].uv = vector2d:new(0, 1);
+			vertices[2].uv = vector2d:new(0, 0);
+			vertices[3].uv = vector2d:new(1, 0);
+			vertices[4].uv = vector2d:new(1, 1);
+
+			vertices[5].uv = vector2d:new(0, 1);
+			vertices[6].uv = vector2d:new(0, 0);
+			vertices[7].uv = vector2d:new(1, 0);
+			vertices[8].uv = vector2d:new(1, 1);
+
+			vertices[9].uv = vector2d:new(0, 1);
+			vertices[10].uv = vector2d:new(0, 0);
+			vertices[11].uv = vector2d:new(1, 0);
+			vertices[12].uv = vector2d:new(1, 1);
+
+			vertices[13].uv = vector2d:new(0, 1);
+			vertices[14].uv = vector2d:new(0, 0);
+			vertices[15].uv = vector2d:new(1, 0);
+			vertices[16].uv = vector2d:new(1, 1);
+
+			vertices[17].uv = vector2d:new(0, 1);
+			vertices[18].uv = vector2d:new(0, 0);
+			vertices[19].uv = vector2d:new(1, 0);
+			vertices[20].uv = vector2d:new(1, 1);
+
+			vertices[21].uv = vector2d:new(0, 1);
+			vertices[22].uv = vector2d:new(0, 0);
+			vertices[23].uv = vector2d:new(1, 0);
+			vertices[24].uv = vector2d:new(1, 1);
+		end
 	end
 end
 
