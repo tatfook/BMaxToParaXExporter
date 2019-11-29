@@ -237,7 +237,7 @@ function BMaxModel:InitFromBlocks(blocks, counterclockwise)
 			table.insert(nodes, frameNode);
 			table.insert(self.m_bones, frameNode);
 		else 
-			local node = BMaxNode:new():init(self, x,y,z,template_id, block_data, counterclockwise);
+			local node = BMaxNode:new():init(self, x,y,z,template_id, block_data, nil, counterclockwise);
 			table.insert(nodes, node);
 		end
 		
