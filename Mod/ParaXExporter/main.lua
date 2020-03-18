@@ -165,8 +165,8 @@ function ParaXExporter:ConvertBlocksToParaX(blocks, output_file_name, bForceNoSc
 	end
 
 	output_file_name, extension = string.match(output_file_name,"(.+)%.(%w+)$");
-	local bmax_file_name = output_file_name..".bmax";
-	self:WriteBMaxFile(bmax_file_name, blocks);
+	--local bmax_file_name = output_file_name..".bmax";
+	--self:WriteBMaxFile(bmax_file_name, blocks);
 
 	-- update block entity data if any
 	for _, b in ipairs(blocks) do
@@ -208,7 +208,7 @@ function ParaXExporter:ConvertBlocksToParaX(blocks, output_file_name, bForceNoSc
 	root_node[#root_node+1] = {name = "submesh", attr = {loddist = BMaxModel.LodIndexToMeter[1], 
 		filename = string.match(output_file_name, "[^/\\]+$") ..".x"}};
 
-	self:WriteXMLFile(filename, root_node);
+	--self:WriteXMLFile(filename, root_node);
 	if(GameLogic)then
 		GameLogic.AddBBS("ParaXModel", format(L"成功导出ParaX文件到%s", commonlib.Encoding.DefaultToUtf8(filename)),  4000, "0 255 0");
 	end
