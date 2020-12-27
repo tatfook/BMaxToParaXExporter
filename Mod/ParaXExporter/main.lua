@@ -120,7 +120,7 @@ function ParaXExporter:RegisterCommand()
 			if(filename and filename~="") then
 				NPL.load("(gl)script/apps/Aries/Creator/Game/Common/Files.lua");
 				local Files = commonlib.gettable("MyCompany.Aries.Game.Common.Files");
-				filename = Files.WorldPathToFullPath(filename, true)
+				filename = Files.FindFile(filename)
 				if(filename) then
 					local output_file_name = filename:gsub("%.(%w+)$", ".x")
 					LOG.std(nil, "info", "ParaXExporter", "exporting from %s to %s", filename, output_file_name);
