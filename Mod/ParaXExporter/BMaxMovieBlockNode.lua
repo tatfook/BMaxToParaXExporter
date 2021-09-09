@@ -196,9 +196,15 @@ function BMaxMovieBlockNode:GetAssetName(actor_table)
 	local timeseries = actor_table.timeseries;
 	local asset_file = timeseries.assetfile;
 	local file_name = asset_file and asset_file.data[1] or "";
+	if(file_name == "") then
+		NPL.load("(gl)script/apps/Aries/Creator/Game/Entity/PlayerAssetFile.lua");
+		local PlayerAssetFile = commonlib.gettable("MyCompany.Aries.Game.EntityManager.PlayerAssetFile")
+		file_name = PlayerAssetFile:GetFilenameByName(file_name) or file_name;
+	end
 	local name, extension = string.match(file_name, "(.+)%.(%w+)$");
 
-	if (extension == "bmax") then
+	extension = extension and string.lower(extension);
+	if (extension == "bmax" or extension == "fbx" or extension == "x") then
 		return file_name;
 	end
 

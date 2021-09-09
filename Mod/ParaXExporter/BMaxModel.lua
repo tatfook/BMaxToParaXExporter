@@ -29,7 +29,8 @@ NPL.load("(gl)Mod/ParaXExporter/Common.lua");
 NPL.load("(gl)script/ide/math/Quaternion.lua");
 NPL.load("(gl)script/ide/math/BlockDirection.lua");
 NPL.load("(gl)Mod/ParaXExporter/Rectangle.lua");
-
+NPL.load("(gl)script/apps/Aries/Creator/Game/Common/Files.lua");
+local Files = commonlib.gettable("MyCompany.Aries.Game.Common.Files");
 local BlockEngine = commonlib.gettable("MyCompany.Aries.Game.BlockEngine")
 local Quaternion = commonlib.gettable("mathlib.Quaternion");
 local Rectangle = commonlib.gettable("Mod.ParaXExporter.Rectangle")
@@ -1076,16 +1077,18 @@ end
 
 function BMaxModel:GetBone(bone_name)
 	for _, bone in ipairs(self.m_bones) do
-		local tranName = bone.bone_name.."_trans";
-		local rotName = bone.bone_name.."_rot";
-		local scaleName = bone.bone_name.."_scale";
-		if bone_name == tranName then
-			return bone, "trans";
-		elseif bone_name == rotName then
-			-- print("rot", bone:GetBoneIndex(), bone_name);
-			return bone, "rot";
-		elseif bone_name == scaleName then
-			return bone, "scale";
+		if(bone.bone_name) then
+			local tranName = bone.bone_name.."_trans";
+			local rotName = bone.bone_name.."_rot";
+			local scaleName = bone.bone_name.."_scale";
+			if bone_name == tranName then
+				return bone, "trans";
+			elseif bone_name == rotName then
+				-- print("rot", bone:GetBoneIndex(), bone_name);
+				return bone, "rot";
+			elseif bone_name == scaleName then
+				return bone, "scale";
+			end
 		end
 	end
 
@@ -1139,14 +1142,8 @@ end
 -- find in world directory, and then find in the current bmax file directory. 
 -- return full path
 function BMaxModel:FindActorFile(actorFileName)
-	local actorFileName_ = GameLogic.GetWorldDirectory()..actorFileName;
-	if(not ParaIO.DoesFileExist(actorFileName_, true)) then
-		actorFileName_ = self:GetFileName():gsub("[^/]+$", "") .. actorFileName:match("([^/]+)$");
-		if(not ParaIO.DoesFileExist(actorFileName_, true)) then
-			actorFileName_ = actorFileName;
-		end
-	end
-	return actorFileName_;
+	actorFileName = Files.FindFile(actorFileName)
+	return actorFileName;
 end
 
 function BMaxModel:GetFileName()
