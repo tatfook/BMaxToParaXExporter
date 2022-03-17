@@ -12,7 +12,7 @@ function BMaxBlockSignNode:ParseBlockSign()
 	local block_content = self.block_content;
 	if block_content then 
 		local cmd = block_content[1];
-		if cmd then 
+		if type(cmd) == "table" then 
 			return cmd[1];
 		end
 	end
@@ -20,7 +20,12 @@ end
 
 function BMaxBlockSignNode:GetSignTitle()
 	if self.signTitle == nil then
-		self.signTitle = self:ParseBlockSign();
+		local text = self:ParseBlockSign();
+		if(type(text) == "string") then
+			self.signTitle = text
+		else
+			self.signTitle = ""
+		end
 	end
 	return self.signTitle;
 end

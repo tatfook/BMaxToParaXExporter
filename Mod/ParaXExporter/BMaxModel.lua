@@ -933,9 +933,17 @@ function BMaxModel:FillVerticesAndIndices2(rectangles)
 end	
 
 function BMaxModel:ParseMovieBlocks()
-	
 	for _, movieBlock in ipairs(self.m_movieBlocks) do
 		movieBlock:ParseMovieInfo();
+		movieBlock:ParseActor();
+	end
+	table.sort(self.m_movieBlocks, function(left, right) 
+		local animId1 = left:GetFirstAnimId() or 0;
+		local animId2 = right:GetFirstAnimId() or 0;
+		return animId1 < animId2
+	end)
+
+	for _, movieBlock in ipairs(self.m_movieBlocks) do
 		movieBlock:ConnectMovieBlock();
 	end
 
@@ -945,7 +953,6 @@ function BMaxModel:ParseMovieBlocks()
 	local startTime = 0;
 	for _, movieBlock in ipairs(self.m_movieBlocks) do
 		if not movieBlock:HasLastBlock() then
-			movieBlock:ParseActor();
 			assetName = movieBlock.asset_file;
 			if not assetName then
 				return;
@@ -961,7 +968,6 @@ function BMaxModel:ParseMovieBlocks()
 	
 	while nextIdx ~= -1 do
 		local currentBlock = self.m_nodes[nextIdx];
-		currentBlock:ParseActor(assetName);
 		self:ParseMovieBlockAnimation(startTime, currentBlock);
 		nextIdx = currentBlock.nextBlock;
 		startTime = startTime + currentBlock.movieLength + BMaxModel.MovieBlockInterval;
@@ -982,6 +988,7 @@ function BMaxModel:ParseMovieBlockAnimation(startTime, currentBlock)
 		local speed = currentBlock.m_speeds[i];
 		animTime = animTime and animTime or currentBlock.m_animTimes[1];
 		speed = speed or currentBlock.m_speeds[1] or 0;
+		-- TODO: endTime logics here is WRONG! 
 		self.actor_model:AddModelAnimation(startTime + animTime, endTime, speed, animId);
 		-- print("anim", animId, startTime + animTime, endTime, speed);
 	end

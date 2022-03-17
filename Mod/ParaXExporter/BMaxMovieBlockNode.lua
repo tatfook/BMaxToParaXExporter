@@ -33,6 +33,7 @@ function BMaxMovieBlockNode:ConnectMovieBlock()
 	if self.hasConnect then 
 		return;
 	end
+	self.hasConnect = true;
 	
 	for i = 0, 5 do
 		local nextSide = BlockDirection:GetBlockSide(i)
@@ -44,11 +45,13 @@ function BMaxMovieBlockNode:ConnectMovieBlock()
 				self:ConnectNode(node, side);
 			elseif node.template_id == BMaxModel.BlockSignId then
 				self.blockSignNode = node;
+			elseif node.template_id == BMaxModel.MovieBlockId and not node.hasConnect then
+				node.lastBlock = self:GetIndex();
+				self.nextBlock = node:GetIndex();
+				node:ConnectMovieBlock();
 			end
 		end
 	end
-
-	self.hasConnect = true;
 end
 
 function BMaxMovieBlockNode:ConnectNode(node, side)
@@ -90,6 +93,8 @@ function BMaxMovieBlockNode:ParseMovieInfo()
 	self.movieLength = time * 1000;
 end
 
+-- @param name: if nil, we will parse the first actor in movie block
+-- if provided, we will only parse the actor whose asset name is same as name. 
 function BMaxMovieBlockNode:ParseActor(name)
 	local actors = self.block_content[2];
 
@@ -99,18 +104,11 @@ function BMaxMovieBlockNode:ParseActor(name)
 			local actor_table = commonlib.LoadTableFromString(v[1])
 			local asset_name = self:GetAssetName(actor_table);
 			if asset_name then
-				if not self:HasLastBlock() then
+				if (not self:HasLastBlock() or asset_name == name) then
 					self.actor_table = actor_table;
 					self.asset_file = asset_name;
 					self:ParseMovieDetail();
 					break;
-				else 
-					if asset_name == name then
-						self.actor_table = actor_table;
-						self.asset_file = asset_name;
-						self:ParseMovieDetail();
-						break;
-					end
 				end 
 			end
 		end
@@ -118,6 +116,14 @@ function BMaxMovieBlockNode:ParseActor(name)
 end
 
 function BMaxMovieBlockNode:ParseMovieDetail()
+	for i = 0, 5 do
+		local nextSide = BlockDirection:GetBlockSide(i)
+		local node = self:GetNeighbour(nextSide );
+		if node and node.template_id == BMaxModel.BlockSignId then
+			self.blockSignNode = node;
+		end
+	end
+
 	if self.actor_table then 
 		local timeseries = self.actor_table.timeseries;
 		if timeseries then
@@ -172,15 +178,20 @@ function BMaxMovieBlockNode:ParseAnimId(timeseries)
 		table.insert(self.m_animIds, 0);
 		table.insert(self.m_animTimes, 0);
 	end
+end
 
+function BMaxMovieBlockNode:GetFirstAnimId()
+	if(self.m_animIds) then
+		return self.m_animIds[1]
+	end
 end
 
 function BMaxMovieBlockNode:GetSignAnimId()
 	if self.blockSignNode then
 		local signTitle = self.blockSignNode:GetSignTitle();
 		if signTitle then
-			local animIdStr, name = string.match(signTitle[1], "(%d+) (%w+)$"); 
-			local animId = tonumber(animId);
+			local animIdStr = string.match(signTitle, "%d+"); 
+			local animId = animIdStr and tonumber(animIdStr);
 			if animId then
 				return animId;
 			end
