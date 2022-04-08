@@ -1,3 +1,4 @@
+local band = mathlib.bit.band;
 local BlockDirection = commonlib.gettable("Mod.ParaXExporter.BlockDirection");
 
 BlockDirection.left = 0;
@@ -11,6 +12,7 @@ BlockDirection.none = 6;
 BlockDirection.s_oppositeDirection = {BlockDirection.right, BlockDirection.left, BlockDirection.back, BlockDirection.front, BlockDirection.bottom, BlockDirection.top, BlockDirection.none};
 
 function BlockDirection:GetBlockSide(v)
+	v = band(v, 0xf)
 	if v == 1 then
 		return BlockDirection.left;
 	elseif v == 0 then
