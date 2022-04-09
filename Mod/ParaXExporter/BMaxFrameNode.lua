@@ -211,7 +211,10 @@ function BMaxFrameNode:GetParentBone(bRefresh)
 					local opSide = BlockDirection:GetOpSide(parentSide);
 					-- if two bones are opposite to each other, the lower one is the parent
 					if opSide ~= side or (dx + dy + dz) < 0 then
-						self:SetParentIndex(parent:GetIndex());
+						-- prevent acyclic links
+						if (not self:IsAncestorOf(parent)) then
+							self:SetParentIndex(parent:GetIndex());
+						end
 					end
 				end
 				break;
