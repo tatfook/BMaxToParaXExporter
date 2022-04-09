@@ -87,7 +87,7 @@ function BMaxFrameNode:GetColor()
 	end
 	
 	local pParentNode = self:GetParent();
-	local mySide = BlockDirection:GetBlockSide(self.block_data);
+	local mySide, myLevelData = self:GetBoneSideAndLevelData(self.block_data);
 	local myOpSide = BlockDirection:GetOpSide(mySide);
 
 	for i = 0, 5 do
@@ -170,6 +170,15 @@ function BMaxFrameNode:AutoSetBoneName()
 	end
 end
 
+-- @return side, levelData;
+function BMaxFrameNode:GetBoneSideAndLevelData(blockData)
+	blockData = blockData or 0;
+	local side = BlockDirection:GetBlockSide(mathlib.bit.band(blockData, 0xf))
+	local levelData = mathlib.bit.rshift(blockData, 8)
+	return side, levelData;
+end
+
+-- this function should match EntityBlockBone:GetParentBone() in paracraft. 
 function BMaxFrameNode:GetParentBone(bRefresh)
 	if bRefresh then
 
@@ -179,7 +188,7 @@ function BMaxFrameNode:GetParentBone(bRefresh)
 		local cy = self.y;
 		local cz = self.z;
 
-		local side = BlockDirection:GetBlockSide(self.block_data);
+		local side, levelData = self:GetBoneSideAndLevelData(self.block_data);
 		local offset = BlockDirection:GetOffsetBySide(side);
 
 		local dx = offset.x;
@@ -194,18 +203,44 @@ function BMaxFrameNode:GetParentBone(bRefresh)
 			local x = cx + dx * i;
 			local y = cy + dy * i;
 			local z = cz + dz * i;
-
 			
 			local parent = self.model:GetFrameNode(x, y, z);
 			if (parent) then
-				local parentSide = BlockDirection:GetBlockSide(parent.block_data);
-				local opSide = BlockDirection:GetOpSide(parentSide);
-				if opSide ~= side or (dx + dy + dz) < 0 then
-					if not self:IsAncestorOf(parent_node) then
+				local parentSide, parentLevelData = self:GetBoneSideAndLevelData(parent.block_data);
+				if(parentLevelData == levelData) then
+					local opSide = BlockDirection:GetOpSide(parentSide);
+					-- if two bones are opposite to each other, the lower one is the parent
+					if opSide ~= side or (dx + dy + dz) < 0 then
 						self:SetParentIndex(parent:GetIndex());
-						break;
 					end
 				end
+				break;
+			end
+		end
+
+		-- search for closest higher level bones
+		if(not self:HasParent()) then
+			local maxParentDistance = 10;
+			local maxParentDistanceSq = maxParentDistance^2;
+			local candidateParent;
+			local candidateLevel = 9999999;
+			local candidateDistSq = 9999999;
+			for _, node in ipairs(self.model:GetBones()) do
+				local x, y, z = node.x, node.y, node.z;
+				local distSq = (x-cx)^2 +(y-cy)^2 + (z-cz)^2  
+				if(distSq <= maxParentDistanceSq and distSq > 0) then
+					local parentSide, parentLevelData = self:GetBoneSideAndLevelData(node.block_data)
+					if(parentLevelData > levelData) then
+						if((candidateLevel > parentLevelData) or ((candidateLevel == parentLevelData) and (candidateDistSq > distSq))) then
+							candidateLevel = parentLevelData
+							candidateDistSq = distSq
+							candidateParent = node;
+						end
+					end
+				end
+			end
+			if(candidateParent) then
+				self:SetParentIndex(candidateParent:GetIndex());
 			end
 		end
 	end

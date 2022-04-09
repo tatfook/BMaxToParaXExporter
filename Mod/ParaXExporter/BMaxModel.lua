@@ -340,6 +340,11 @@ function BMaxModel:GetModelFrame()
 	return blockMaxX - blockMinX, blockMaxY - blockMinY, blockMaxZ - blockMinZ;
 end
 
+-- return array of all bones
+function BMaxModel:GetBones()
+	return self.m_bones
+end
+
 -- public: load from array of bone
 function BMaxModel:ParseBlockFrames()
 
