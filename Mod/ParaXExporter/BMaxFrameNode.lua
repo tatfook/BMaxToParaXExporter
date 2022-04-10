@@ -223,15 +223,13 @@ function BMaxFrameNode:GetParentBone(bRefresh)
 
 		-- search for closest higher level bones
 		if(not self:HasParent()) then
-			local maxParentDistance = 10;
-			local maxParentDistanceSq = maxParentDistance^2;
 			local candidateParent;
 			local candidateLevel = 9999999;
 			local candidateDistSq = 9999999;
 			for _, node in ipairs(self.model:GetBones()) do
 				local x, y, z = node.x, node.y, node.z;
 				local distSq = (x-cx)^2 +(y-cy)^2 + (z-cz)^2  
-				if(distSq <= maxParentDistanceSq and distSq > 0) then
+				if(distSq > 0) then
 					local parentSide, parentLevelData = self:GetBoneSideAndLevelData(node.block_data)
 					if(parentLevelData > levelData) then
 						if((candidateLevel > parentLevelData) or ((candidateLevel == parentLevelData) and (candidateDistSq > distSq))) then
