@@ -6,7 +6,7 @@ function ModelAnimation:ctor()
 	self.timeEnd = 0;
 
 	self.moveSpeed = 0;
-	self.loopType = 0;
+	self.loopType = 1; -- 0 for looping, 1 for non-looping
 	self.flags = 0;
 	self.d1 = 0;
 	self.d2 = 0;

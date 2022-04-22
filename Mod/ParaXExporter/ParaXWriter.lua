@@ -544,8 +544,7 @@ function ParaXWriter:WriteXAnimations()
 		self:WriteToken("<int_list>");
 		self.file:WriteInt(5);
 
-		self.file:WriteInt(1);
-		
+		self.file:WriteInt(anim.loopType);
 		self.file:WriteInt(anim.flags);
 		self.file:WriteInt(anim.d1);
 		self.file:WriteInt(anim.d2);

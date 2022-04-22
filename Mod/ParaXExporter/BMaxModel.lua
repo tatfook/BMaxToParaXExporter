@@ -999,22 +999,27 @@ function BMaxModel:ParseMovieBlockAnimation(startTime, currentBlock)
 	end
 end
 
-function BMaxModel:AddModelAnimation(startTime, endTime, moveSpeed, animId)
+function BMaxModel:AddModelAnimation(startTime, endTime, moveSpeed, animId, loopType)
+	if(not loopType) then
+		-- if movement speed is not zero or the animID is 4 or 5, we will make it looping by default. 
+		loopType = (moveSpeed ~= 0 or animId == 4 or animId == 5) and 0 or 1;
+	end
+	local function UpdateAnim_(anim, startTime, endTime, moveSpeed, animId, loopType)
+		anim.timeStart = startTime;
+		anim.timeEnd = endTime;
+		anim.animId = animId;
+		anim.moveSpeed = moveSpeed;
+		anim.loopType = loopType;
+	end
 	for index, animation in ipairs(self.m_animations) do
 		if animation.animId == animId then
-			animation.timeStart = startTime;
-			animation.timeEnd = endTime;
-			animation.animId = animId;
-			animation.moveSpeed = moveSpeed;
+			UpdateAnim_(animation, startTime, endTime, moveSpeed, animId, loopType)
 			self:AddBoneRange(index);
 			return;
 		end
 	end
 	local anim = ModelAnimation:new();
-	anim.timeStart = startTime;
-	anim.timeEnd = endTime;
-	anim.animId = animId;
-	anim.moveSpeed = moveSpeed;
+	UpdateAnim_(anim, startTime, endTime, moveSpeed, animId, loopType)
 	table.insert(self.m_animations, anim);
 	self:AddBoneRange();
 end
