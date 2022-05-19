@@ -81,7 +81,7 @@ function ParaXExporter:OnClickExport()
 	SaveFileDialog.ShowPage(L"请输入ParaX文件名:", function(result)
 		if(result and result~="") then
 			ParaXExporter.last_filename = result;
-			local filename = GameLogic.GetWorldDirectory()..result;
+			local filename = GameLogic.GetWorldDirectory().."blocktemplates/"..result;
 			LOG.std(nil, "info", "ParaXExporter", "exporting to %s", filename);
 			GameLogic.RunCommand("paraxexporter", filename);
 		end
@@ -101,7 +101,7 @@ function ParaXExporter:RegisterCommand()
 			file_name = (cmd_text or ""):gsub("^%s+", ""):gsub("%s+$", "");
 			if(file_name and file_name~="") then
 				if(not file_name:match("[/\\]")) then
-					file_name = GameLogic.GetWorldDirectory()..file_name;
+					file_name = GameLogic.GetWorldDirectory().."blocktemplates/"..file_name;
 				end
 				self:Export(nil, file_name);
 			end
@@ -211,7 +211,7 @@ function ParaXExporter:ConvertBlocksToParaX(blocks, output_file_name, bForceNoSc
 	--self:WriteXMLFile(filename, root_node);
 	if(GameLogic)then
 		local filename = string.gsub(filename,GameLogic.GetWorldDirectory(),"")
-		GameLogic.AddBBS("ParaXModel", format(L"成功导出ParaX文件到%s", commonlib.Encoding.DefaultToUtf8(filename)),  4000, "0 255 0");
+		GameLogic.AddBBS("ParaXModel", format(L"ParaX文件成功保存到:%s", commonlib.Encoding.DefaultToUtf8(filename)),  4000, "0 255 0");
 	end
 end
 
@@ -351,7 +351,7 @@ function ParaXExporter:Export(input_file_name, output_file_name, useTextures, bF
 		self:WriteXMLFile(filename, root_node);
 		if(GameLogic)then
 			local filename = string.gsub(filename,GameLogic.GetWorldDirectory(),"")
-			GameLogic.AddBBS("ParaXModel", format(L"成功导出ParaX文件到%s", commonlib.Encoding.DefaultToUtf8(filename)),  4000, "0 255 0");
+			GameLogic.AddBBS("ParaXModel", format(L"ParaX文件成功保存到:%s", commonlib.Encoding.DefaultToUtf8(filename)),  4000, "0 255 0");
 		end
 
 		if (isValid) then
@@ -365,6 +365,10 @@ function ParaXExporter:Export(input_file_name, output_file_name, useTextures, bF
 					end
 				end);
 			end
+		end
+
+		if true then
+			GameLogic.GetFilters():apply_filters("file_exported", "x", filename);
 		end
 	else
 		LOG.std(nil, "info", "ParaXExporter", "no valid input");
