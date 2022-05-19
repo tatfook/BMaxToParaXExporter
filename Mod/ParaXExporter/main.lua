@@ -210,6 +210,7 @@ function ParaXExporter:ConvertBlocksToParaX(blocks, output_file_name, bForceNoSc
 
 	--self:WriteXMLFile(filename, root_node);
 	if(GameLogic)then
+		local filename = string.gsub(filename,GameLogic.GetWorldDirectory(),"")
 		GameLogic.AddBBS("ParaXModel", format(L"成功导出ParaX文件到%s", commonlib.Encoding.DefaultToUtf8(filename)),  4000, "0 255 0");
 	end
 end
@@ -349,6 +350,7 @@ function ParaXExporter:Export(input_file_name, output_file_name, useTextures, bF
 		end
 		self:WriteXMLFile(filename, root_node);
 		if(GameLogic)then
+			local filename = string.gsub(filename,GameLogic.GetWorldDirectory(),"")
 			GameLogic.AddBBS("ParaXModel", format(L"成功导出ParaX文件到%s", commonlib.Encoding.DefaultToUtf8(filename)),  4000, "0 255 0");
 		end
 
