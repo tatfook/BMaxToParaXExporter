@@ -21,6 +21,12 @@ function AnimationBlock:AddKey(key)
 	self.nKeys = self.nKeys + 1;
 end
 
+function AnimationBlock:UpdateLastKey(key)
+	if(self.nKeys > 0) then
+		self.keys[self.nKeys] = key;
+	end
+end
+
 function AnimationBlock:AddTime(time)
 	table.insert(self.times, time);
 	self.nTimes = self.nTimes + 1;

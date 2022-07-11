@@ -1055,6 +1055,7 @@ end
 function BMaxModel:AddBoneAnimation(startTime, endTime, anim_data)
 	
 	if anim_data then 
+		-- inserting the starting static key in case no animation is found. 
 		for _, frameNode in ipairs(self.m_bones) do
 			frameNode:GenerateStartFrame(startTime);
 		end
@@ -1080,8 +1081,17 @@ function BMaxModel:AddBoneAnimation(startTime, endTime, anim_data)
 						if block then
 							for k , v in ipairs(data) do
 								if time[k] and data[k] then
-									block:AddKey(data[k])
-									block:AddTime(time[k] + startTime);
+									if(k == 1) then
+										-- we will overwrite the starting static key. 
+										block:UpdateLastKey(data[k])
+										if(time[k] > 0) then
+											block:AddKey(data[k])
+											block:AddTime(time[k] + startTime);
+										end
+									else
+										block:AddKey(data[k])
+										block:AddTime(time[k] + startTime);
+									end
 								end
 							end
 						end
