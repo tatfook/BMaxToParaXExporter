@@ -91,7 +91,7 @@ function BMaxFrameNode:GetColor()
 	local myOpSide = BlockDirection:GetOpSide(mySide);
 
 	for i = 0, 5 do
-		local side = BlockDirection:GetBlockSide((myOpSide + i) % 6);
+		local side = (myOpSide + i) % 6;
 		if side ~= mySide or pParentNode == nil then
 			local neighbourNode = self:GetNeighbour(side);
 			if neighbourNode and not neighbourNode:HasBoneWeight() and neighbourNode.template_id ~= BMaxModel.BoneBlockId then
