@@ -75,13 +75,27 @@ function ParaXExporter:RegisterExporter()
 	end);
 end
 
+function ParaXExporter:GetFilenameFullPath(templatename)
+	local filename, relative_path;
+	templatename = templatename:gsub("_LOD%d+", "")
+	if(commonlib.Files.IsAbsolutePath(templatename)) then
+		filename = relative_path;
+	else
+		templatename = templatename:gsub("^blocktemplates/", "");
+		templatename = commonlib.Encoding.Utf8ToDefault(templatename);
+		relative_path = format("blocktemplates/%s", templatename);
+		filename = GameLogic.GetWorldDirectoryAt()..relative_path;
+	end
+	return filename;
+end
+
 function ParaXExporter:OnClickExport()
 	NPL.load("(gl)script/apps/Aries/Creator/Game/GUI/SaveFileDialog.lua");
 	local SaveFileDialog = commonlib.gettable("MyCompany.Aries.Game.GUI.SaveFileDialog");
 	SaveFileDialog.ShowPage(L"请输入ParaX文件名:", function(result)
 		if(result and result~="") then
 			ParaXExporter.last_filename = result;
-			local filename = GameLogic.GetWorldDirectory().."blocktemplates/"..result;
+			local filename = result
 			LOG.std(nil, "info", "ParaXExporter", "exporting to %s", filename);
 			GameLogic.RunCommand("paraxexporter", filename);
 		end
@@ -100,9 +114,7 @@ function ParaXExporter:RegisterCommand()
 			local file_name;
 			file_name = (cmd_text or ""):gsub("^%s+", ""):gsub("%s+$", "");
 			if(file_name and file_name~="") then
-				if(not file_name:match("[/\\]")) then
-					file_name = GameLogic.GetWorldDirectory().."blocktemplates/"..file_name;
-				end
+				file_name = self:GetFilenameFullPath(file_name)
 				self:Export(nil, file_name);
 			end
 		end,
