@@ -60,7 +60,9 @@ function BMaxNode:init(model, x, y, z, template_id, block_data, block_content, c
 		end
 	end
 
-	self.modelInfoObj = ParaBlockWorld.GetBlockModelInfo(self.template_id,self.block_data,{})
+	if ParaBlockWorld.GetBlockModelInfo then
+		self.modelInfoObj = ParaBlockWorld.GetBlockModelInfo(self.template_id,self.block_data,{})
+	end
 
 	return self;
 end
@@ -103,7 +105,7 @@ end
 function BMaxNode:CreateCube()
 	local block_template = block_types.get(self.template_id);
 	local cube = BlockModel:new();
-	if self:IsCustomCube() then
+	if self:IsCustomCube() and self.modelInfoObj then
 		cube:InitCubeWithCppObject(self.modelInfoObj)
 	else
 		cube:InitCube(self.texFaceNum, self.counterclockwise);

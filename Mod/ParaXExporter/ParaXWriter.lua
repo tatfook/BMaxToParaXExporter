@@ -608,8 +608,8 @@ function ParaXWriter:WriteRawData()
 		self.file:WriteFloat(texcoords[1]);
 		self.file:WriteFloat(texcoords[2]);
 
-		self.file:WriteInt(vertice.color0);
-		self.file:WriteInt(vertice.color1);
+		self.file:WriteInt(vertice.color0 or 0);
+		self.file:WriteInt(vertice.color1 or 0);
 	end
 
 	local indices = self.model.m_indices;
