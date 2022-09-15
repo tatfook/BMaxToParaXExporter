@@ -443,13 +443,32 @@ function BMaxModel:MergeCoplanerBlockFace()
 		local node = self.m_nodes[index];
 		local cube = node:GetCube();
 		if(cube) then
-			for i = 0, 5 do 
-				if cube:IsFaceNotUse(i) then
-					self:FindCoplanerFace(rectangles, node, i);
+			local faceCount = cube:GetFaceCount()
+			if node:IsCustomCube() then
+				for i=0,faceCount-1 do 
+					local faceIndex = i
+					
+					local cube = node:GetCube();
+					if cube then
+						local nodes = {node, node, node, node};
+						local rectangle = Rectangle:new():init(nodes, faceIndex);
+						cube:SetFaceUsed(faceIndex);	
+
+						rectangle:CloneNodes();
+						table.insert(rectangles, rectangle);
+					end
 				end
-			end	
+			else
+				for i = 0, 5 do 
+					if cube:IsFaceNotUse(i) then
+						self:FindCoplanerFace(rectangles, node, i);
+					end
+				end	
+			end
+			
 		end
 	end
+	
 	-- print("rect count", #rectangles);
 	return rectangles;
 end 
@@ -478,6 +497,9 @@ function BMaxModel:FindNeighbourFace(rectangle, i, faceIndex)
 	
 	local index = faceIndex * 4 + i;
 	local offset = Rectangle.DirectionOffsetTable[index];
+	if offset==nil then
+		return
+	end
 
 	local nextI;
 	if i == 3 then
@@ -495,6 +517,9 @@ function BMaxModel:FindNeighbourFace(rectangle, i, faceIndex)
 			
 			if not neighbourNode or currentNode:GetColor() ~= neighbourNode:GetColor() or currentNode:GetBoneIndex() ~= neighbourNode:GetBoneIndex() then
 				return;
+			end
+			if neighbourNode:IsCustomCube() then
+				return
 			end
 			local neighbourCube = neighbourNode:GetCube();
 			if not neighbourCube or not neighbourCube:IsFaceNotUse(faceIndex) then

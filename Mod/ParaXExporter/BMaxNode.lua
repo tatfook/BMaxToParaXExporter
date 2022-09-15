@@ -50,6 +50,7 @@ function BMaxNode:init(model, x, y, z, template_id, block_data, block_content, c
 	if(blocktemplate) then
 		self.solid = blocktemplate.solid;
 		self.texture = blocktemplate.texture;
+		self.modelName = blocktemplate.modelName
 		if (blocktemplate.threeSideTex) then
 			self.texFaceNum = 3;
 		elseif (blocktemplate.fourSideTex) then
@@ -58,6 +59,9 @@ function BMaxNode:init(model, x, y, z, template_id, block_data, block_content, c
 			self.texFaceNum = 6;
 		end
 	end
+
+	self.modelInfoObj = ParaBlockWorld.GetBlockModelInfo(self.template_id,self.block_data,{})
+
 	return self;
 end
 
@@ -91,9 +95,19 @@ local names = commonlib.gettable("MyCompany.Aries.Game.block_types.names")
 
 local neighborBlocks = {};
 
+function BMaxNode:IsCustomCube()
+	return self.modelName=="slope" or self.modelName=="stairs" or self.modelName=="slab"
+end
+
 -- create a new cube from this node.
 function BMaxNode:CreateCube()
-	local cube = BlockModel:new():InitCube(self.texFaceNum, self.counterclockwise);
+	local block_template = block_types.get(self.template_id);
+	local cube = BlockModel:new();
+	if self:IsCustomCube() then
+		cube:InitCubeWithCppObject(self.modelInfoObj)
+	else
+		cube:InitCube(self.texFaceNum, self.counterclockwise);
+	end
 	local dx = self.x - self.model.m_centerPos[1];
 	local dy = self.y - self.model.m_centerPos[2];
 	local dz = self.z - self.model.m_centerPos[3];
@@ -104,7 +118,7 @@ end
 function BMaxNode:TessellateBlock()
 	local block_template = block_types.get(self.template_id);
 
-	if( block_template and not block_template.solid and self.template_id~=names.Bone) then
+	if( block_template and not block_template.solid and self.template_id~=names.Bone and not self:IsCustomCube() ) then
 		-- skip rendering non-solid blocks like wires that only connect other blocks.
 		return;
 	end
@@ -144,6 +158,12 @@ function BMaxNode:TessellateBlock()
 				end
 			end
 			
+			cube:SetFaceVisible(face);
+		end
+	end
+	if cube and self:IsCustomCube() then
+		local faceCount = cube:GetFaceCount()
+		for face = 0, faceCount-1 do 
 			cube:SetFaceVisible(face);
 		end
 	end

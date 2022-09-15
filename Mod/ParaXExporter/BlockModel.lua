@@ -84,6 +84,19 @@ function BlockModel:InitCube(texFaceNum, counterclockwise)
 	return self;
 end
 
+function BlockModel:InitCubeWithCppObject(obj)
+	local vertices = self.m_vertices;
+	for k,v in ipairs(obj.m_Vertices) do 
+		vertices[k] = {}
+		vertices[k].position = vector3d:new({v.position.x,v.position.y,v.position.z});
+		vertices[k].normal = vector3d:new({v.normal.x,v.normal.y,v.normal.z});
+		vertices[k].uv = vector2d:new({v.texcoord.u,v.texcoord.v});
+		vertices[k].color = v.color
+		vertices[k].color2 = v.color2
+	end
+	return self
+end
+
 function BlockModel:InitFace()
 	for i = 1, 6 do
 		table.insert(self.faces, BlockModel.FaceInvisiable);
@@ -518,7 +531,9 @@ function BlockModel:AddFace(from_block, nFaceIndex)
 end
 
 function BlockModel:SetVertexColor(index, color)
-	self.m_vertices[index+1].color2 = color;
+	if(self.m_vertices[index+1]) then
+		self.m_vertices[index+1].color2 = color;
+	end
 end
 
 function BlockModel:GetVertices()
