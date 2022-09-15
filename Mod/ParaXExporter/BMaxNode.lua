@@ -60,8 +60,8 @@ function BMaxNode:init(model, x, y, z, template_id, block_data, block_content, c
 		end
 	end
 
-	if ParaBlockWorld.GetBlockModelInfo then
-		self.modelInfoObj = ParaBlockWorld.GetBlockModelInfo(self.template_id,self.block_data,{})
+	if self:IsCustomCube() and ParaBlockWorld.GetBlockModelInfo then
+		self.modelInfoObj = ParaBlockWorld.GetBlockModelInfo(self.template_id,self.block_data or 0,{})
 	end
 
 	return self;
