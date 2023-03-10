@@ -448,7 +448,6 @@ function BMaxModel:MergeCoplanerBlockFace()
 				for i=0,faceCount-1 do 
 					local faceIndex = i
 					
-					local cube = node:GetCube();
 					if cube then
 						local nodes = {node, node, node, node};
 						local rectangle = Rectangle:new():init(nodes, faceIndex);

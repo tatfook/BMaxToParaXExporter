@@ -132,12 +132,15 @@ function BMaxNode:TessellateBlock()
 	local cube;
 	local aoFlags;
 	local color;
-
-	for face = 0, 5 do
+	local faceCount = 6
+	if self:IsCustomCube() then
+		cube = cube or self:CreateCube();
+		faceCount = cube:GetFaceCount()
+	end
+	for face = 0, faceCount-1 do
 		local nFirstVertex = face * 4;
 		local pCurBlock = neighborBlocks[BlockCommon.RBP_SixNeighbors[face]];
-			
-		if(not pCurBlock or (pCurBlock:GetBoneIndex() ~= self.bone_index) or not pCurBlock:IsSolid()) then
+		if(not pCurBlock or (pCurBlock:GetBoneIndex() ~= self.bone_index) or not pCurBlock:IsSolid() or self:IsCustomCube()) then
 			cube = cube or self:CreateCube();
 			color = color or self:GetColor();
 			aoFlags = aoFlags or self:CalculateCubeAO(neighborBlocks);
