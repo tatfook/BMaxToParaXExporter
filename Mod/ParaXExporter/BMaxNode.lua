@@ -124,6 +124,7 @@ function BMaxNode:TessellateBlock()
 		-- skip rendering non-solid blocks like wires that only connect other blocks.
 		return;
 	end
+	local isUniformLighting = not (not block_template or block_template.solid or self.template_id == names.Bone)
 
 	local nNearbyBlockCount = 27;
 	neighborBlocks[BlockCommon.rbp_center] = self;
@@ -135,7 +136,7 @@ function BMaxNode:TessellateBlock()
 	local faceCount = 6
 	if self:IsCustomCube() then
 		cube = cube or self:CreateCube();
-		faceCount = cube:GetFaceCount()
+		faceCount = math.min(faceCount, cube:GetFaceCount())
 	end
 	for face = 0, faceCount-1 do
 		local nFirstVertex = face * 4;
@@ -149,15 +150,19 @@ function BMaxNode:TessellateBlock()
 				local i = nFirstVertex + v;
 				--local nIndex = cube:AddVertex(temp_cube, i);
 				local nShadowLevel = 0;
-				if (aoFlags > 0) then
+				if (not isUniformLighting and aoFlags > 0) then
 					nShadowLevel = cube:CalculateCubeVertexAOShadowLevel(i, aoFlags);
-					local fShadow = (255 - nShadowLevel) / 255;
+					if(nShadowLevel ~= 0) then
+						local fShadow = (255 - nShadowLevel) / 255;
 
-					local r, g, b = Color.DWORD_TO_RGBA(color);
-					r = math.floor(fShadow * r);
-					g = math.floor(fShadow * g);
-					b = math.floor(fShadow * b);
-					cube:SetVertexColor(i, Color.RGBA_TO_DWORD(r, g, b));
+						local r, g, b = Color.DWORD_TO_RGBA(color);
+						r = math.floor(fShadow * r);
+						g = math.floor(fShadow * g);
+						b = math.floor(fShadow * b);
+						cube:SetVertexColor(i, Color.RGBA_TO_DWORD(r, g, b));
+					else
+						cube:SetVertexColor(i, color);
+					end
 				else 
 					cube:SetVertexColor(i, color);
 				end
