@@ -124,7 +124,8 @@ function BMaxNode:TessellateBlock()
 		-- skip rendering non-solid blocks like wires that only connect other blocks.
 		return;
 	end
-	local isUniformLighting = not (not block_template or block_template.solid or self.template_id == names.Bone)
+	-- metal block and other non-solid blocks uses uniform lighting. 
+	local isUniformLighting = not (not block_template or (block_template.solid and self.template_id ~= names.MetalBlock) or self.template_id == names.Bone)
 
 	local nNearbyBlockCount = 27;
 	neighborBlocks[BlockCommon.rbp_center] = self;
@@ -144,7 +145,7 @@ function BMaxNode:TessellateBlock()
 		if(not pCurBlock or (pCurBlock:GetBoneIndex() ~= self.bone_index) or not pCurBlock:IsSolid() or self:IsCustomCube()) then
 			cube = cube or self:CreateCube();
 			color = color or self:GetColor();
-			aoFlags = aoFlags or self:CalculateCubeAO(neighborBlocks);
+			aoFlags = aoFlags or (isUniformLighting and 0 or self:CalculateCubeAO(neighborBlocks));
 
 			for v = 0, 3 do
 				local i = nFirstVertex + v;
