@@ -666,48 +666,74 @@ function BMaxModel:CalculateBoneWeights()
 		end
 end
 
-function BMaxModel:CalculateBoneWeightForBlock(pBoneNode, node, bMustBeSameColor)
-	if node and not node:HasBoneWeight() then
-		if node.template_id ~= BMaxModel.BoneBlockId then
-			if (not bMustBeSameColor) or node:GetColor() == pBoneNode:GetColor() then
-				node:SetBoneIndex(pBoneNode:GetBoneIndex());
-				for i = 0, 5 do
-					self:CalculateBoneWeightForBlock(pBoneNode, node:GetNeighbour(i), bMustBeSameColor);
-				end
-			end
-		end
+local blockStack = {}
+function BMaxModel:CalculateBoneWeightForBlock(pBoneNode, startNode, bMustBeSameColor)
+	if #blockStack > 0 then
+		commonlib.resize(blockStack,0)
 	end
+	local pBoneColor = pBoneNode:GetColor()
+	local pBoneIndex = pBoneNode:GetBoneIndex()
+    table.insert(blockStack, startNode)
+    while #blockStack > 0 do
+        local node = table.remove(blockStack)
+        if node and not node:HasBoneWeight() then
+            if node.template_id ~= BMaxModel.BoneBlockId then
+                if (not bMustBeSameColor) or node:GetColor() == pBoneColor then
+                    node:SetBoneIndex(pBoneIndex)
+                    for i = 0, 5 do
+                        local neighbor = node:GetNeighbour(i)
+                        if neighbor then
+                            table.insert(blockStack, neighbor)
+                        end
+                    end
+                end
+            end
+        end
+    end
 end
 
+local neighborStack = {}
 function BMaxModel:CalculateBoneWeightFromNeighbours(node)
-
-	if node and not node:HasBoneWeight() then
-		local bFoundBone = false;
-		for i = 0, 5 do
-			if not bFoundBone then
-				local side = BlockDirection:GetBlockSide(i);
-				local pNeighbourNode = node:GetNeighbour(side);
-			
-				if pNeighbourNode and pNeighbourNode:HasBoneWeight() then
-					node:SetBoneIndex(pNeighbourNode:GetBoneIndex());
-					bFoundBone = true;
-				end
-			end
-			
-		end
-
-		if (bFoundBone) then
-			for i = 0, 5 do
-				local side = BlockDirection:GetBlockSide(i);
-				local pNeighbourNode = node:GetNeighbour(side);
-			
-				if pNeighbourNode and not pNeighbourNode:HasBoneWeight() then
-					self:CalculateBoneWeightFromNeighbours(pNeighbourNode);
-				end
-			end
-		end
-			
+    if not node or node:HasBoneWeight() then
+        return
+    end
+	if #neighborStack > 0 then
+		commonlib.resize(neighborStack,0)
 	end
+
+    local visited = {}
+
+    table.insert(neighborStack, node)
+
+    while #neighborStack > 0 do
+        local currentNode = table.remove(neighborStack)
+        visited[currentNode] = true
+
+        local bFoundBone = false
+
+        for i = 0, 5 do
+            if not bFoundBone then
+                local side = BlockDirection:GetBlockSide(i)
+                local pNeighbourNode = currentNode:GetNeighbour(side)
+
+                if pNeighbourNode and pNeighbourNode:HasBoneWeight() then
+                    currentNode:SetBoneIndex(pNeighbourNode:GetBoneIndex())
+                    bFoundBone = true
+                end
+            end
+        end
+
+        if bFoundBone then
+            for i = 0, 5 do
+                local side = BlockDirection:GetBlockSide(i)
+                local pNeighbourNode = currentNode:GetNeighbour(side)
+
+                if pNeighbourNode and not visited[pNeighbourNode] and not pNeighbourNode:HasBoneWeight() then
+                    table.insert(neighborStack, pNeighbourNode)
+                end
+            end
+        end
+    end
 end
 
 function BMaxModel:CalculateBoneSkin(pBoneNode)
